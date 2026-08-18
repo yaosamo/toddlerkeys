@@ -1,10 +1,18 @@
 # ToddlerKeys
 
-A tiny macOS toy: mash the keyboard, get notes and silly sounds.
+A tiny macOS menu-bar toy: mash the keyboard, get notes and silly sounds.
 
-No sample packs, no permissions. Letters play a pentatonic scale so random
-mashing still sounds friendly. Numbers and a few special keys play synthesized
-effects (boing, duck, laser, siren…).
+It sits in the menu bar until you press **⌥⌘K** (or choose **Lock Keyboard**).
+That locks the keyboard so other apps do not receive keys, and blob-cat
+stickers fly out across the screen. The idle face is a blob kitty. Follow-along
+songs are optional. The same hotkey or **Unlock** turns lock off.
+
+Stickers are Blob Cats (Apache 2.0 via DuckOfDisorder/BlobCats, derived from
+Google blob art) plus a few Slackmoji blob-cat GIFs. Not Hello Kitty or other
+trademarked characters. See `THIRD_PARTY_BLOBCATS_LICENSE`. [Privacy](PRIVACY.md).
+
+Letters and F-keys play a pentatonic scale so random mashing still sounds
+friendly. Pretty much every other key has its own synthesized effect.
 
 ## Run
 
@@ -22,25 +30,43 @@ The built app lands under Xcode’s DerivedData. From Xcode, Run is the easy pat
 
 | Keys | Sound |
 | --- | --- |
-| `A`–`Z` | Musical notes (C pentatonic, low keys on the bottom row) |
-| `1`–`0` | Silly effects |
-| Space | Kick |
-| Return | Fanfare |
-| Tab | Chord |
-| Delete | Rewind |
+| `A`–`Z`, F1–F12 | Musical notes (C pentatonic) |
+| `1`–`0` | Silly effects (boing, quack, laser…) |
+| Punctuation | More effects (robot, drip, ding, meow…) |
+| Space / Return / Tab / Delete | Kick, fanfare, chord, rewind |
+| Shift / Caps / Ctrl / Opt / ⌘ / fn | Thump, giggle, spark, magic, wow, click |
 | Arrow keys | Slides |
-| On-screen keys | Same sounds, clickable |
+| Keypad, Home, End, Page Up/Down | Same family of notes and effects |
+| On-screen keys | Full laptop layout, clickable |
 
-The app only listens while it is frontmost, so it does not need Accessibility
-access. Parent shortcuts (`⌘Q`, `⌘W`, `⌘H`, `⌘M`) still work.
+Any leftover key still makes a sound from its key code, so a full-size keyboard is covered too.
+
+## Menu bar & lock
+
+| Action | How |
+| --- | --- |
+| Lock + overlay | `⌥⌘K`, or **Lock Keyboard** |
+| Unlock | `⌥⌘K` again, or **Unlock** |
+| Follow a song | **Follow a Song** — Off by default. Five nursery songs on Z X C V B |
+| Hear the melody | **Hear Song** (only while a song is on) |
+| About | **About ToddlerKeys** |
+| Quit | **Quit ToddlerKeys** |
+
+Keyboard lock needs **Accessibility** and sometimes **Input Monitoring**. macOS
+will prompt; you can also use **Allow Keyboard Access…**. Until those are on,
+the overlay still appears but other apps can still receive keys.
+
+There is no Dock icon. Look for the piano-keys icon in the menu bar. It turns
+into a lock while a session is active.
 
 ## MVP scope
 
-- Native SwiftUI Mac app
+- Menu-bar agent, no Dock icon
+- Simple global hotkey (`⌥⌘K`) to lock the keyboard
+- Full-screen overlay of the last pressed key
 - Polyphonic synthesized audio (no audio files)
-- Big visual bursts + a light-up keyboard
-- Key-repeat ignored so a stuck key does not scream
+- Optional full on-screen keyboard
 
 ## Later, maybe
 
-Custom sound packs, a true baby-lock, and a fullscreen kiosk mode.
+Custom sound packs, a configurable hotkey, and a mouse lock.

@@ -5,7 +5,7 @@ enum AppInfo {
     static var name: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
             ?? Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String
-            ?? "ToddlerKeys"
+            ?? "Mr.Blobsky"
     }
 
     static var version: String {
@@ -26,7 +26,9 @@ final class AboutPanel {
 
     func show() {
         let window = preparedWindow()
+        sizeToFit(window)
         window.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.assistiveTechHighWindow)) + 4)
+        window.center()
         window.orderFrontRegardless()
         window.makeKey()
     }
@@ -43,10 +45,14 @@ final class AboutPanel {
         window.styleMask = [.titled, .closable, .fullSizeContentView]
         window.titlebarAppearsTransparent = true
         window.isReleasedWhenClosed = false
-        window.setContentSize(NSSize(width: 380, height: 340))
-        window.center()
         self.window = window
         return window
+    }
+
+    private func sizeToFit(_ window: NSWindow) {
+        guard let host = window.contentViewController as? NSHostingController<AboutView> else { return }
+        let fitting = host.sizeThatFits(in: NSSize(width: 400, height: 2000))
+        window.setContentSize(NSSize(width: 400, height: max(360, fitting.height)))
     }
 }
 
@@ -54,46 +60,50 @@ private struct AboutView: View {
     let onClose: () -> Void
 
     var body: some View {
-        VStack(spacing: 14) {
-            Image(nsImage: NSApp.applicationIconImage)
+        VStack(spacing: 10) {
+            Image("AboutIcon")
                 .resizable()
+                .interpolation(.high)
                 .frame(width: 72, height: 72)
-                .padding(.top, 12)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .padding(.top, 8)
 
             Text(AppInfo.name)
-                .font(.system(size: 22, weight: .bold))
+                .font(.system(size: 20, weight: .bold))
             Text("Version \(AppInfo.version)")
-                .font(.system(size: 13))
+                .font(.system(size: 12))
                 .foregroundStyle(.secondary)
 
             Text("A menu-bar toy that turns the Mac keyboard into sounds and stickers for little hands.")
                 .font(.system(size: 13))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.primary)
-                .padding(.horizontal, 8)
+                .fixedSize(horizontal: false, vertical: true)
 
             if let privacyURL = URL(string: "https://github.com/yaosamo/toddlerkeys/blob/main/PRIVACY.md") {
                 Link("Privacy", destination: privacyURL)
                     .font(.system(size: 13, weight: .semibold))
             }
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("Credits")
                     .font(.system(size: 12, weight: .semibold))
-                Text("Blob Cat stickers from DuckOfDisorder/BlobCats, derived from Google blob emoji, licensed under Apache License 2.0.")
+                Text("Blob Cats by DuckOfDisorder, from Google blob emoji.\nApache License 2.0.")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(12)
+            .padding(10)
             .background(RoundedRectangle(cornerRadius: 10).fill(Color(nsColor: .controlBackgroundColor)))
 
             Text(AppInfo.copyright)
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
-                .padding(.bottom, 8)
+                .padding(.bottom, 4)
         }
-        .padding(22)
-        .frame(width: 380)
+        .padding(20)
+        .frame(width: 400)
+        .fixedSize(horizontal: true, vertical: true)
     }
 }

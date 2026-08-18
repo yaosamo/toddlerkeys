@@ -21,9 +21,20 @@ final class SoundEngine {
         startIfNeeded()
     }
 
-    func play(_ sound: MappedSound) {
+    func play(_ sound: MappedSound, instrument: Instrument = .piano) {
         startIfNeeded()
-        let buffer = Synth.buffer(for: sound)
+        let buffer: AVAudioPCMBuffer
+        if instrument == .voice, VoiceBank.shared.hasSample {
+            buffer = VoiceBank.shared.buffer(for: sound)
+        } else {
+            let builtIn = instrument == .voice ? Instrument.piano : instrument
+            buffer = Synth.buffer(for: sound, instrument: builtIn)
+        }
+        playBuffer(buffer)
+    }
+
+    func playBuffer(_ buffer: AVAudioPCMBuffer) {
+        startIfNeeded()
         let player = players[nextPlayer]
         nextPlayer = (nextPlayer + 1) % poolSize
         if player.isPlaying {
@@ -34,7 +45,7 @@ final class SoundEngine {
     }
 
     func playWelcome() {
-        play(.effect(.chord))
+        play(.effect(.chord), instrument: .piano)
     }
 
     private func startIfNeeded() {

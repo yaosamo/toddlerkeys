@@ -46,7 +46,7 @@ enum EffectKind: String, Equatable, CaseIterable {
         case .rewind: return "Rewind"
         case .chord: return "Chord"
         case .sparkle: return "Sparkle"
-        case .thump: return "Tick"
+        case .thump: return "Clack"
         case .giggle: return "Giggle"
         case .magic: return "Magic"
         case .spark: return "Spark"
@@ -344,7 +344,7 @@ enum KeyMap {
     ]
 
     private static let bottomRow: [ToyKey] = [
-        key("lshift", display: "shift", caption: "Thump", sound: .effect(.thump), codes: [56], flex: 2.25, captioned: false)
+        key("lshift", display: "shift", caption: "Clack", sound: .effect(.thump), codes: [56], flex: 2.25, captioned: false)
     ] + letterRow([
         ("z", 6, 60), ("x", 7, 62), ("c", 8, 64), ("v", 9, 67), ("b", 11, 69),
         ("n", 45, 72), ("m", 46, 74)
@@ -352,7 +352,7 @@ enum KeyMap {
         key(",", display: ",", caption: "Spring", sound: .effect(.spring), chars: ",<", codes: [43], captioned: false),
         key(".", display: ".", caption: "Coin", sound: .effect(.coin), chars: ".>", codes: [47], captioned: false),
         key("/", display: "/", caption: "Wah", sound: .effect(.wah), chars: "/?", codes: [44], captioned: false),
-        key("rshift", display: "shift", caption: "Thump", sound: .effect(.thump), codes: [60], flex: 2.35, captioned: false)
+        key("rshift", display: "shift", caption: "Clack", sound: .effect(.thump), codes: [60], flex: 2.35, captioned: false)
     ]
 
     private static let modifierRow: [ToyKey] = [

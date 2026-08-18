@@ -8,7 +8,7 @@ enum Synth {
         switch sound {
         case .note(let midi, _):
             switch instrument {
-            case .piano:
+            case .piano, .voice:
                 return pluck(midi: midi, seconds: 0.72)
             case .guitar:
                 return guitar(midi: midi)
@@ -326,14 +326,18 @@ enum Synth {
     }
 
     private static func thump() -> AVAudioPCMBuffer {
-        var noise = Noise(seed: 0x7700)
-        return render(seconds: 0.16) { t, phase in
-            let env = exp(-t / 0.035)
-            let tick = sin(phase) * exp(-t / 0.012)
-            let hiss = Double(noise.next()) * env
-            return (tick * 0.22 + hiss * 0.3)
-        } advance: { _ in
-            2_400
+        var noise = Noise(seed: 0xC1AC)
+        return render(seconds: 0.26) { t, phase in
+            let env = exp(-t / 0.075)
+            let body = sin(phase) * 0.78
+                + sin(phase * 1.54) * 0.42
+                + sin(phase * 2.17) * 0.16
+            let click = t < 0.007
+                ? (1 - t / 0.007) * (0.62 + Double(noise.next()) * 0.22)
+                : 0
+            return body * env + click
+        } advance: { t in
+            880 * exp(-5.8 * t) + 610
         }
     }
 

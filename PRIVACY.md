@@ -1,18 +1,20 @@
 # Privacy
 
-ToddlerKeys does not collect, store, or send personal data.
+Mr.Blobsky does not collect, store, or send personal data.
 
 There are no accounts, analytics, advertising, or crash reporters. The app does not talk to the network for its toy features.
 
 ## Keyboard access
 
-Locking the keyboard uses **Accessibility** and **Input Monitoring** on macOS. Those permissions exist only so key presses stay inside ToddlerKeys and do not type into other apps (or start Music, change volume, and so on).
+Locking the keyboard uses **Accessibility** and **Input Monitoring** on macOS. Those permissions exist only so key presses stay inside Mr.Blobsky and do not type into other apps (or start Music, change volume, and so on).
 
 Key events are used in memory to play a sound and show a sticker. They are not written to disk or uploaded.
 
 ## Microphone
 
-ToddlerKeys does not use the microphone.
+**Record a Sound** asks for the microphone so you can capture a short clip (about 2.5 seconds). Mr.Blobsky pitches and varies that clip to play a different version on each key.
+
+The recording is stored only in this Mac’s Application Support folder (`MrBlobsky/voice.wav`). It is not uploaded, shared, or used for anything except playback in the app. You can forget it from the Record window. If you never record, the microphone is not used.
 
 ## Contact
 

@@ -73,7 +73,7 @@ into a lock while a session is active.
 - Simple global hotkey (`⌥⌘K`) to lock the keyboard
 - Full-screen overlay of the last pressed key
 - Polyphonic synthesized audio, or a recording you make
-- Record a short clip and hear it pitched across the keyboard
+- Record a short clip and hear it pitched across the keyboard; recording again replaces the previous clip
 
 ## Later, maybe
 

@@ -3,6 +3,13 @@ import AVFoundation
 import SwiftUI
 
 @MainActor
+protocol RecordedSoundInstalling: AnyObject {
+    func install(_ raw: [Float])
+}
+
+extension VoiceBank: RecordedSoundInstalling {}
+
+@MainActor
 final class RecordPanel: NSObject, NSWindowDelegate {
     static let shared = RecordPanel()
 
@@ -61,9 +68,19 @@ final class RecorderController: NSObject, ObservableObject, AVAudioRecorderDeleg
     let limit = VoiceBank.maxSeconds
 
     private weak var playground: Playground?
+    private let soundInstaller: any RecordedSoundInstalling
     private var recorder: AVAudioRecorder?
     private var tick: Timer?
     private var takeURL: URL?
+
+    override convenience init() {
+        self.init(soundInstaller: VoiceBank.shared)
+    }
+
+    init(soundInstaller: any RecordedSoundInstalling) {
+        self.soundInstaller = soundInstaller
+        super.init()
+    }
 
     func attach(playground: Playground) {
         self.playground = playground
@@ -81,16 +98,6 @@ final class RecorderController: NSObject, ObservableObject, AVAudioRecorderDeleg
     func preview() {
         guard !pendingSamples.isEmpty, let playground else { return }
         playground.sound.playBuffer(VoiceBank.shared.previewBuffer(from: pendingSamples))
-    }
-
-    func useThisSound() {
-        guard !pendingSamples.isEmpty else { return }
-        VoiceBank.shared.install(pendingSamples)
-        playground?.applyVoicePreference()
-        if let z = KeyMap.all.first(where: { $0.id == "z" }) {
-            playground?.play(z, countsForSong: false)
-        }
-        errorMessage = nil
     }
 
     func forget() {
@@ -228,12 +235,19 @@ final class RecorderController: NSObject, ObservableObject, AVAudioRecorderDeleg
                 pendingSamples = []
                 return
             }
-            pendingSamples = samples
-            hasPending = true
-            elapsed = Double(samples.count) / Synth.sampleRate
+            acceptFinishedTake(samples)
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    func acceptFinishedTake(_ samples: [Float]) {
+        pendingSamples = samples
+        hasPending = true
+        elapsed = Double(samples.count) / Synth.sampleRate
+        soundInstaller.install(samples)
+        playground?.applyVoicePreference()
+        errorMessage = nil
     }
 
     private func requestMic() async -> Bool {
@@ -297,11 +311,6 @@ private struct RecordView: View {
                     controller.preview()
                 }
                 .disabled(!controller.hasPending || controller.isRecording)
-
-                Button("Use This Sound") {
-                    controller.useThisSound()
-                }
-                .disabled(!controller.hasPending || controller.isRecording)
             }
 
             if voice.hasSample {
@@ -320,7 +329,7 @@ private struct RecordView: View {
                 }
             }
 
-            Text("The clip is saved on this Mac only. Nothing is uploaded.")
+            Text("Each new clip replaces the last one. It stays on this Mac and is never uploaded.")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
 
@@ -374,7 +383,7 @@ private struct RecordView: View {
 
     private var statusLine: String {
         if controller.isRecording { return "Listening…" }
-        if controller.hasPending { return "Take ready" }
+        if controller.hasPending { return "New sound saved" }
         if voice.hasSample { return "A sound is already saved" }
         return "Ready to record"
     }

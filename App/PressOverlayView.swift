@@ -18,8 +18,19 @@ struct PressOverlayView: View {
                 )
                 .ignoresSafeArea()
 
+                ForEach(playground.trackpadSparks) { spark in
+                    TrackpadSparkView(spark: spark, canvas: geo.size)
+                }
+
                 ForEach(playground.bursts) { burst in
                     BurstBlob(burst: burst, canvas: geo.size)
+                }
+
+                if playground.hasMovedTrackpad {
+                    TrackpadMagicCursor(
+                        position: playground.trackpadPosition,
+                        canvas: geo.size
+                    )
                 }
 
                 if session.isLocked {
@@ -29,7 +40,10 @@ struct PressOverlayView: View {
                 }
 
                 if playground.trackpadTick > 0 {
-                    TrackpadSurpriseGlow(canvas: geo.size)
+                    TrackpadSurpriseGlow(
+                        canvas: geo.size,
+                        position: playground.trackpadPosition
+                    )
                         .id(playground.trackpadTick)
                 }
 
@@ -53,7 +67,7 @@ struct PressOverlayView: View {
                             .padding(.top, 10)
                     }
 
-                    Text("Press the trackpad for a surprise")
+                    Text("Move the trackpad to paint magic • press for a surprise")
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.78))
                         .padding(.top, 8)
@@ -72,28 +86,96 @@ struct PressOverlayView: View {
 
 private struct TrackpadSurpriseGlow: View {
     let canvas: CGSize
+    let position: CGPoint
     @State private var expanded = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        Capsule()
+        Circle()
             .fill(
-                LinearGradient(
+                RadialGradient(
                     colors: [
-                        Color.pink.opacity(0.08),
                         Color.yellow.opacity(0.72),
-                        Color.purple.opacity(0.16)
+                        Color.pink.opacity(0.42),
+                        Color.purple.opacity(0.08),
+                        Color.clear
                     ],
-                    startPoint: .leading,
-                    endPoint: .trailing
+                    center: .center,
+                    startRadius: 4,
+                    endRadius: 90
                 )
             )
-            .frame(width: min(680, canvas.width * 0.56), height: 76)
-            .position(x: canvas.width * 0.5, y: canvas.height - 96)
-            .scaleEffect(expanded ? 1.2 : 0.72)
-            .opacity(expanded ? 0 : 0.82)
+            .frame(width: 180, height: 180)
+            .position(x: position.x * canvas.width, y: position.y * canvas.height)
+            .scaleEffect(expanded ? (reduceMotion ? 1.15 : 2.1) : 0.35)
+            .opacity(expanded ? 0 : 0.9)
             .allowsHitTesting(false)
             .onAppear {
-                withAnimation(.easeOut(duration: 0.55)) {
+                withAnimation(.easeOut(duration: reduceMotion ? 0.18 : 0.55)) {
+                    expanded = true
+                }
+            }
+    }
+}
+
+private struct TrackpadMagicCursor: View {
+    let position: CGPoint
+    let canvas: CGSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        let color = Color(
+            hue: Double(position.x) * 0.7,
+            saturation: 0.72,
+            brightness: 1
+        )
+
+        ZStack {
+            Circle()
+                .fill(color.opacity(0.18))
+                .frame(width: 46, height: 46)
+                .blur(radius: 3)
+            Image(systemName: "sparkles")
+                .font(.system(size: 22, weight: .bold))
+                .foregroundStyle(.white)
+                .shadow(color: color, radius: 9)
+        }
+        .position(x: position.x * canvas.width, y: position.y * canvas.height)
+        .animation(
+            reduceMotion ? nil : .easeOut(duration: 0.08),
+            value: position
+        )
+        .allowsHitTesting(false)
+    }
+}
+
+private struct TrackpadSparkView: View {
+    let spark: TrackpadSpark
+    let canvas: CGSize
+    @State private var expanded = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Image(systemName: "sparkle")
+            .font(.system(size: spark.size, weight: .bold))
+            .foregroundStyle(
+                Color(hue: spark.hue, saturation: 0.76, brightness: 1)
+            )
+            .shadow(
+                color: Color(hue: spark.hue, saturation: 0.8, brightness: 1).opacity(0.75),
+                radius: 8
+            )
+            .rotationEffect(.degrees(spark.rotation + (expanded && !reduceMotion ? 32 : 0)))
+            .scaleEffect(expanded ? (reduceMotion ? 1 : 1.55) : 0.35)
+            .offset(y: expanded && !reduceMotion ? -18 : 0)
+            .opacity(expanded ? 0 : 0.95)
+            .position(
+                x: spark.position.x * canvas.width,
+                y: spark.position.y * canvas.height
+            )
+            .allowsHitTesting(false)
+            .onAppear {
+                withAnimation(.easeOut(duration: reduceMotion ? 0.18 : 0.68)) {
                     expanded = true
                 }
             }

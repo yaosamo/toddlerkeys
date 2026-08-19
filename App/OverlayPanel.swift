@@ -11,6 +11,7 @@ final class OverlayPanel {
     func show(session: AppSession) {
         let window = preparedWindow(session: session)
         layout(window)
+        rootView?.resetMotion()
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
         window.makeFirstResponder(rootView)
@@ -37,6 +38,11 @@ final class OverlayPanel {
         }
 
         let root = OverlayRootView(frame: .zero)
+        root.onPointerMove = { [weak session] position in
+            MainActor.assumeIsolated {
+                session?.playground.moveTrackpad(to: position)
+            }
+        }
 
         let host = NSHostingController(
             rootView: PressOverlayView(session: session, playground: session.playground)
@@ -112,5 +118,43 @@ private final class OverlayWindow: NSWindow {
 }
 
 private final class OverlayRootView: NSView {
+    var onPointerMove: ((CGPoint) -> Void)?
+
+    private var pointerTrackingArea: NSTrackingArea?
+    private var motionGate = TrackpadMotionGate()
+
     override var acceptsFirstResponder: Bool { true }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let pointerTrackingArea {
+            removeTrackingArea(pointerTrackingArea)
+        }
+        let area = NSTrackingArea(
+            rect: .zero,
+            options: [.mouseMoved, .activeAlways, .inVisibleRect],
+            owner: self,
+            userInfo: nil
+        )
+        addTrackingArea(area)
+        pointerTrackingArea = area
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        let point = convert(event.locationInWindow, from: nil)
+        let uptime = ProcessInfo.processInfo.systemUptime
+        guard bounds.width > 0, bounds.height > 0,
+              motionGate.accept(position: point, at: uptime) else {
+            return
+        }
+        let normalizedPosition = CGPoint(
+            x: min(1, max(0, point.x / bounds.width)),
+            y: min(1, max(0, 1 - point.y / bounds.height))
+        )
+        onPointerMove?(normalizedPosition)
+    }
+
+    func resetMotion() {
+        motionGate = TrackpadMotionGate()
+    }
 }

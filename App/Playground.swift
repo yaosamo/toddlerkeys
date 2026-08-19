@@ -15,6 +15,14 @@ struct Burst: Identifiable, Equatable {
     let duration: Double
 }
 
+struct TrackpadSpark: Identifiable, Equatable {
+    let id: UUID
+    let position: CGPoint
+    let hue: Double
+    let size: CGFloat
+    let rotation: Double
+}
+
 @MainActor
 final class Playground: ObservableObject {
     @Published var bursts: [Burst] = []
@@ -26,11 +34,15 @@ final class Playground: ObservableObject {
     @Published var instrument: Instrument = .piano
     @Published var bounceTick = 0
     @Published var trackpadTick = 0
+    @Published var trackpadPosition = CGPoint(x: 0.5, y: 0.5)
+    @Published var trackpadSparks: [TrackpadSpark] = []
+    @Published var hasMovedTrackpad = false
 
     let sound = SoundEngine()
     private var demoTask: Task<Void, Never>?
     private var celebrateTask: Task<Void, Never>?
     private var trackpadSurpriseIndex = 0
+    private var trackpadMotionIndex = 0
 
     private static let trackpadSurprises: [ToyKey] = [
         ToyKey(id: "trackpad-sparkle", display: "✨", caption: "Sparkle", sound: .effect(.sparkle), showsCaption: false),
@@ -60,13 +72,13 @@ final class Playground: ObservableObject {
         return passThrough ? event : nil
     }
 
-    func play(_ key: ToyKey, countsForSong: Bool = true) {
+    func play(_ key: ToyKey, countsForSong: Bool = true, burstOrigin: CGPoint? = nil) {
         sound.play(key.sound, instrument: instrument)
         litKeyID = key.id
         hasPlayed = true
         bounceTick += 1
 
-        let burst = makeBurst(for: key)
+        let burst = makeBurst(for: key, origin: burstOrigin)
         bursts.append(burst)
         if bursts.count > 28 {
             bursts.removeFirst(bursts.count - 28)
@@ -93,7 +105,39 @@ final class Playground: ObservableObject {
         let surprise = surprises[trackpadSurpriseIndex % surprises.count]
         trackpadSurpriseIndex = (trackpadSurpriseIndex + 1) % surprises.count
         trackpadTick += 1
-        play(surprise, countsForSong: false)
+        play(surprise, countsForSong: false, burstOrigin: trackpadPosition)
+    }
+
+    func moveTrackpad(to position: CGPoint) {
+        let clamped = CGPoint(
+            x: min(1, max(0, position.x)),
+            y: min(1, max(0, position.y))
+        )
+        trackpadPosition = clamped
+        hasMovedTrackpad = true
+
+        let index = trackpadMotionIndex
+        trackpadMotionIndex += 1
+        let spark = TrackpadSpark(
+            id: UUID(),
+            position: clamped,
+            hue: (
+                Double(clamped.x) * 0.68
+                + Double(clamped.y) * 0.14
+                + Double(index % 5) * 0.035
+            ).truncatingRemainder(dividingBy: 1),
+            size: CGFloat(19 + index % 4 * 4),
+            rotation: Double(index % 12) * 29
+        )
+        trackpadSparks.append(spark)
+        if trackpadSparks.count > 32 {
+            trackpadSparks.removeFirst(trackpadSparks.count - 32)
+        }
+
+        let sparkID = spark.id
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.82) { [weak self] in
+            self?.trackpadSparks.removeAll { $0.id == sparkID }
+        }
     }
 
     func clearBursts() {
@@ -103,6 +147,10 @@ final class Playground: ObservableObject {
         bounceTick = 0
         trackpadTick = 0
         trackpadSurpriseIndex = 0
+        trackpadPosition = CGPoint(x: 0.5, y: 0.5)
+        trackpadSparks.removeAll()
+        hasMovedTrackpad = false
+        trackpadMotionIndex = 0
     }
 
     func startSong(_ newSong: NurserySong) {
@@ -182,15 +230,22 @@ final class Playground: ObservableObject {
         }
     }
 
-    private func makeBurst(for key: ToyKey) -> Burst {
+    private func makeBurst(for key: ToyKey, origin: CGPoint? = nil) -> Burst {
         let seed = abs(key.id.hashValue)
         let originJitterX = CGFloat((seed % 11) - 5) / 140
         let originJitterY = CGFloat(((seed / 11) % 9) - 4) / 160
         let baseAngle = Double((seed % 150) + 15) * .pi / 180
         let angle = baseAngle + Double.random(in: -0.42...0.42)
         let distance = 0.28 + CGFloat(seed % 18) / 18 * 0.22 + CGFloat.random(in: -0.05...0.06)
-        let startX = 0.50 + originJitterX + CGFloat.random(in: -0.03...0.03)
-        let startY = 0.58 + originJitterY + CGFloat.random(in: -0.025...0.025)
+        let baseOrigin = origin ?? CGPoint(x: 0.50, y: 0.58)
+        let startX = min(
+            0.94,
+            max(0.06, baseOrigin.x + originJitterX + CGFloat.random(in: -0.03...0.03))
+        )
+        let startY = min(
+            0.92,
+            max(0.08, baseOrigin.y + originJitterY + CGFloat.random(in: -0.025...0.025))
+        )
         return Burst(
             id: UUID(),
             stickerName: StickerBook.sticker(for: key.id),

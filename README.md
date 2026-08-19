@@ -38,6 +38,7 @@ The built app lands under Xcode’s DerivedData. From Xcode, Run is the easy pat
 | Arrow keys | Slides |
 | Keypad, Home, End, Page Up/Down | Same family of notes and effects |
 | On-screen keys | Full laptop layout, clickable |
+| Trackpad click/tap | A rotating surprise sound and sticker burst |
 
 Any leftover key still makes a sound from its key code, so a full-size keyboard is covered too.
 
@@ -58,6 +59,9 @@ Keyboard lock needs **Accessibility** and sometimes **Input Monitoring**. macOS
 will prompt; you can also use **Allow Keyboard Access…**. Until those are on,
 the overlay still appears but other apps can still receive keys.
 
+While locked, mouse and trackpad clicks are also contained by the overlay. A
+deliberate click makes one surprise; resting a hand on the trackpad does nothing.
+
 There is no Dock icon. Look for the piano-keys icon in the menu bar. It turns
 into a lock while a session is active.
 
@@ -71,4 +75,4 @@ into a lock while a session is active.
 
 ## Later, maybe
 
-A configurable hotkey, and a mouse lock.
+A configurable hotkey.

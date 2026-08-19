@@ -29,6 +29,9 @@ final class AppSession: ObservableObject {
         locker.onStroke = { [weak self] stroke in
             self?.playLocked(stroke)
         }
+        locker.onTrackpadPress = { [weak self] in
+            self?.playground.playTrackpad()
+        }
         hotKey.onPressed = { [weak self] in
             self?.handleHotKey()
         }

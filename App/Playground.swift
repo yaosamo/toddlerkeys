@@ -25,10 +25,21 @@ final class Playground: ObservableObject {
     @Published var songCompleted = false
     @Published var instrument: Instrument = .piano
     @Published var bounceTick = 0
+    @Published var trackpadTick = 0
 
     let sound = SoundEngine()
     private var demoTask: Task<Void, Never>?
     private var celebrateTask: Task<Void, Never>?
+    private var trackpadSurpriseIndex = 0
+
+    private static let trackpadSurprises: [ToyKey] = [
+        ToyKey(id: "trackpad-sparkle", display: "✨", caption: "Sparkle", sound: .effect(.sparkle), showsCaption: false),
+        ToyKey(id: "trackpad-pop", display: "●", caption: "Pop", sound: .effect(.pop), showsCaption: false),
+        ToyKey(id: "trackpad-giggle", display: "☺", caption: "Giggle", sound: .effect(.giggle), showsCaption: false),
+        ToyKey(id: "trackpad-magic", display: "★", caption: "Magic", sound: .effect(.magic), showsCaption: false),
+        ToyKey(id: "trackpad-wow", display: "!", caption: "Wow", sound: .effect(.wow), showsCaption: false),
+        ToyKey(id: "trackpad-meow", display: "♡", caption: "Meow", sound: .effect(.meow), showsCaption: false)
+    ]
 
     var nextKeyID: String? {
         guard let song, !songCompleted, songIndex < song.notes.count else { return nil }
@@ -77,11 +88,21 @@ final class Playground: ObservableObject {
         }
     }
 
+    func playTrackpad() {
+        let surprises = Self.trackpadSurprises
+        let surprise = surprises[trackpadSurpriseIndex % surprises.count]
+        trackpadSurpriseIndex = (trackpadSurpriseIndex + 1) % surprises.count
+        trackpadTick += 1
+        play(surprise, countsForSong: false)
+    }
+
     func clearBursts() {
         bursts.removeAll()
         hasPlayed = false
         litKeyID = nil
         bounceTick = 0
+        trackpadTick = 0
+        trackpadSurpriseIndex = 0
     }
 
     func startSong(_ newSong: NurserySong) {

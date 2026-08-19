@@ -100,7 +100,7 @@ final class VoiceBank: ObservableObject {
         }
     }
 
-    private func render(_ source: [Float], recipe: Recipe, capSeconds: Double = 1.35) -> AVAudioPCMBuffer {
+    private func render(_ source: [Float], recipe: Recipe, capSeconds: Double = 1.85) -> AVAudioPCMBuffer {
         let primary = bake(source, recipe: recipe, capSeconds: capSeconds)
         var mix = primary
         if let layerRate = recipe.layerRate {

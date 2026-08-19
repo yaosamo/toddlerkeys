@@ -25,6 +25,12 @@ struct PressOverlayView: View {
                 if session.isLocked {
                     CenterKitty(bounceTick: playground.bounceTick)
                         .position(x: geo.size.width * 0.5, y: geo.size.height * 0.5)
+                        .allowsHitTesting(false)
+                }
+
+                if playground.trackpadTick > 0 {
+                    TrackpadSurpriseGlow(canvas: geo.size)
+                        .id(playground.trackpadTick)
                 }
 
                 VStack(spacing: 0) {
@@ -47,15 +53,50 @@ struct PressOverlayView: View {
                             .padding(.top, 10)
                     }
 
+                    Text("Press the trackpad for a surprise")
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.78))
+                        .padding(.top, 8)
                     Text("\(ToggleHotKey.displayName) to unlock")
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.65))
-                        .padding(.top, 10)
+                        .padding(.top, 6)
                         .padding(.bottom, 28)
                 }
+                .allowsHitTesting(false)
             }
         }
         .allowsHitTesting(false)
+    }
+}
+
+private struct TrackpadSurpriseGlow: View {
+    let canvas: CGSize
+    @State private var expanded = false
+
+    var body: some View {
+        Capsule()
+            .fill(
+                LinearGradient(
+                    colors: [
+                        Color.pink.opacity(0.08),
+                        Color.yellow.opacity(0.72),
+                        Color.purple.opacity(0.16)
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .frame(width: min(680, canvas.width * 0.56), height: 76)
+            .position(x: canvas.width * 0.5, y: canvas.height - 96)
+            .scaleEffect(expanded ? 1.2 : 0.72)
+            .opacity(expanded ? 0 : 0.82)
+            .allowsHitTesting(false)
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.55)) {
+                    expanded = true
+                }
+            }
     }
 }
 

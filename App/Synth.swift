@@ -9,9 +9,9 @@ enum Synth {
         case .note(let midi, _):
             switch instrument {
             case .piano, .voice:
-                return pluck(midi: midi, seconds: 0.72)
+                return pluck(midi: midi, seconds: 1.05, decay: 0.38)
             case .guitar:
-                return guitar(midi: midi)
+                return guitar(midi: midi, seconds: 1.1, decay: 0.42)
             case .drums:
                 return drumKit(midi: midi)
             }
@@ -60,7 +60,7 @@ enum Synth {
         }
     }
 
-    private static func guitar(midi: Int, seconds: Double = 0.82) -> AVAudioPCMBuffer {
+    private static func guitar(midi: Int, seconds: Double = 0.82, decay: Double = 0.33) -> AVAudioPCMBuffer {
         let (buffer, left, right, frames) = allocate(seconds: seconds)
         let root = midiToHz(midi)
         let fifth = midiToHz(midi + 7)
@@ -78,7 +78,7 @@ enum Synth {
             if phaseRoot > 2 * .pi { phaseRoot -= 2 * .pi * floor(phaseRoot / (2 * .pi)) }
             if phaseFifth > 2 * .pi { phaseFifth -= 2 * .pi * floor(phaseFifth / (2 * .pi)) }
             let tone = softSaw(phaseRoot) * 0.72 + softSaw(phaseFifth) * 0.3
-            let env = attackDecay(t, attack: 0.004, decay: 0.33)
+            let env = attackDecay(t, attack: 0.004, decay: decay)
             let sample = Float(tanh(tone * 2.2) * env)
             left[i] = sample * leftGain
             right[i] = sample * rightGain
@@ -133,9 +133,9 @@ enum Synth {
         return sum
     }
 
-    private static func pluck(midi: Int, seconds: Double, start: Double = 0, gain: Double = 0.28) -> AVAudioPCMBuffer {
+    private static func pluck(midi: Int, seconds: Double, start: Double = 0, gain: Double = 0.28, decay: Double = 0.24) -> AVAudioPCMBuffer {
         let (buffer, left, right, frames) = allocate(seconds: seconds)
-        addPluck(midi: midi, start: start, duration: seconds, gain: gain, left: left, right: right, frames: frames)
+        addPluck(midi: midi, start: start, duration: seconds, gain: gain, decay: decay, left: left, right: right, frames: frames)
         return buffer
     }
 
@@ -144,6 +144,7 @@ enum Synth {
         start: Double,
         duration: Double,
         gain: Double,
+        decay: Double = 0.24,
         left: UnsafeMutablePointer<Float>,
         right: UnsafeMutablePointer<Float>,
         frames: Int
@@ -161,7 +162,7 @@ enum Synth {
             let frame = startFrame + i
             guard frame >= 0, frame < frames else { continue }
             let t = Double(i) / sampleRate
-            let env = attackDecay(t, attack: 0.007, decay: 0.24)
+            let env = attackDecay(t, attack: 0.007, decay: decay)
             phase += (2 * .pi * freq) / sampleRate
             if phase > 2 * .pi { phase -= 2 * .pi * floor(phase / (2 * .pi)) }
 
@@ -187,7 +188,7 @@ enum Synth {
         render(seconds: seconds) { t, phase in
             let progress = t / seconds
             let freq = start * pow(end / start, progress)
-            let env = attackDecay(t, attack: 0.008, decay: seconds * 0.55)
+            let env = attackDecay(t, attack: 0.008, decay: seconds * 0.72)
             let am = bounce ? (0.55 + 0.45 * abs(sin(2 * .pi * 7 * t))) : 1
             var sample = 0.0
             for h in 1...harmonics {
@@ -247,8 +248,8 @@ enum Synth {
 
     private static func kick() -> AVAudioPCMBuffer {
         var noise = Noise(seed: 0xB00B)
-        return render(seconds: 0.3) { t, phase in
-            let env = exp(-t / 0.09)
+        return render(seconds: 0.42) { t, phase in
+            let env = exp(-t / 0.13)
             let click = t < 0.01 ? Double(noise.next()) * (1 - t / 0.01) * 0.22 : 0
             return (sin(phase) * env + click) * 0.42
         } advance: { t in
@@ -287,7 +288,7 @@ enum Synth {
             let white = Double(noise.next())
             low += coeff * (white - low)
             let raw = bright ? (white - low) : low
-            let env = attackDecay(t, attack: 0.006, decay: seconds * 0.45)
+            let env = attackDecay(t, attack: 0.006, decay: seconds * 0.58)
             return raw * env * (bright ? 0.28 : 0.34)
         } advance: { _ in
             0
@@ -295,31 +296,31 @@ enum Synth {
     }
 
     private static func fanfare() -> AVAudioPCMBuffer {
-        let seconds = 0.62
+        let seconds = 0.82
         let (buffer, left, right, frames) = allocate(seconds: seconds)
         let notes = [(72, 0.00), (76, 0.11), (79, 0.22), (84, 0.34)]
         for (midi, start) in notes {
-            addPluck(midi: midi, start: start, duration: 0.38, gain: 0.2, left: left, right: right, frames: frames)
+            addPluck(midi: midi, start: start, duration: 0.52, gain: 0.2, left: left, right: right, frames: frames)
         }
         saturate(left, right, frames: frames)
         return buffer
     }
 
     private static func chord() -> AVAudioPCMBuffer {
-        let seconds = 0.7
+        let seconds = 0.95
         let (buffer, left, right, frames) = allocate(seconds: seconds)
         for midi in [60, 64, 67, 72] {
-            addPluck(midi: midi, start: 0, duration: seconds, gain: 0.16, left: left, right: right, frames: frames)
+            addPluck(midi: midi, start: 0, duration: seconds, gain: 0.16, decay: 0.36, left: left, right: right, frames: frames)
         }
         saturate(left, right, frames: frames)
         return buffer
     }
 
     private static func sparkle() -> AVAudioPCMBuffer {
-        let seconds = 0.48
+        let seconds = 0.62
         let (buffer, left, right, frames) = allocate(seconds: seconds)
         for (midi, start) in [(96, 0.00), (100, 0.08), (103, 0.16)] {
-            addPluck(midi: midi, start: start, duration: 0.28, gain: 0.16, left: left, right: right, frames: frames)
+            addPluck(midi: midi, start: start, duration: 0.4, gain: 0.16, decay: 0.32, left: left, right: right, frames: frames)
         }
         saturate(left, right, frames: frames)
         return buffer
@@ -358,18 +359,18 @@ enum Synth {
     }
 
     private static func magic() -> AVAudioPCMBuffer {
-        let seconds = 0.62
+        let seconds = 0.88
         let (buffer, left, right, frames) = allocate(seconds: seconds)
         for midi in [76, 81, 88, 93] {
-            addPluck(midi: midi, start: 0, duration: seconds, gain: 0.12, left: left, right: right, frames: frames)
+            addPluck(midi: midi, start: 0, duration: seconds, gain: 0.12, decay: 0.36, left: left, right: right, frames: frames)
         }
         saturate(left, right, frames: frames)
         return buffer
     }
 
     private static func wow() -> AVAudioPCMBuffer {
-        render(seconds: 0.5) { t, phase in
-            let env = attackDecay(t, attack: 0.04, decay: 0.24)
+        render(seconds: 0.68) { t, phase in
+            let env = attackDecay(t, attack: 0.04, decay: 0.34)
             let tone = sin(phase) + sin(2 * phase) * 0.25
             return tone * env * 0.28
         } advance: { t in
@@ -388,8 +389,8 @@ enum Synth {
     }
 
     private static func bell() -> AVAudioPCMBuffer {
-        render(seconds: 0.7) { t, phase in
-            let env = attackDecay(t, attack: 0.004, decay: 0.28)
+        render(seconds: 0.95) { t, phase in
+            let env = attackDecay(t, attack: 0.004, decay: 0.4)
             let tone = sin(phase) + 0.35 * sin(phase * 2.76) + 0.12 * sin(phase * 5.4)
             return tone * env * 0.24
         } advance: { _ in
@@ -446,8 +447,8 @@ enum Synth {
     }
 
     private static func ping() -> AVAudioPCMBuffer {
-        render(seconds: 0.22) { t, phase in
-            sin(phase) * exp(-t / 0.07) * 0.28
+        render(seconds: 0.34) { t, phase in
+            sin(phase) * exp(-t / 0.11) * 0.28
         } advance: { _ in
             1320
         }

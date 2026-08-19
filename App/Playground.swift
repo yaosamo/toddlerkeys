@@ -108,6 +108,11 @@ final class Playground: ObservableObject {
         play(surprise, countsForSong: false, burstOrigin: trackpadPosition)
     }
 
+    func refuse() {
+        sound.play(.effect(.honk), instrument: .piano)
+        bounceTick += 1
+    }
+
     func moveTrackpad(to position: CGPoint) {
         let clamped = CGPoint(
             x: min(1, max(0, position.x)),

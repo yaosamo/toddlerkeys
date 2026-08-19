@@ -34,8 +34,21 @@ struct PressOverlayView: View {
                 }
 
                 if session.isLocked {
-                    CenterKitty(bounceTick: playground.bounceTick)
+                    CenterKitty(
+                        bounceTick: playground.bounceTick,
+                        refusalTick: session.refusalTick
+                    )
                         .position(x: geo.size.width * 0.5, y: geo.size.height * 0.5)
+                        .allowsHitTesting(false)
+                }
+
+                if session.isPlaytimeOver {
+                    RefusalBubble()
+                        .id(session.refusalTick)
+                        .position(
+                            x: geo.size.width * 0.5,
+                            y: max(120, geo.size.height * 0.5 - 205)
+                        )
                         .allowsHitTesting(false)
                 }
 
@@ -67,7 +80,27 @@ struct PressOverlayView: View {
                             .padding(.top, 10)
                     }
 
-                    Text("Move the trackpad to paint magic • press for a surprise")
+                    if let playTimeStatus = session.playTimeStatus {
+                        Text(playTimeStatus)
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .foregroundStyle(session.isPlaytimeOver ? .black.opacity(0.78) : .white)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 7)
+                            .background(
+                                Capsule().fill(
+                                    session.isPlaytimeOver
+                                        ? Color.yellow.opacity(0.92)
+                                        : Color.black.opacity(0.28)
+                                )
+                            )
+                            .padding(.top, 10)
+                    }
+
+                    Text(
+                        session.isPlaytimeOver
+                            ? "Mr.Blobsky says nope — parent time!"
+                            : "Move the trackpad to paint magic • press for a surprise"
+                    )
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.78))
                         .padding(.top, 8)
@@ -81,6 +114,41 @@ struct PressOverlayView: View {
             }
         }
         .allowsHitTesting(false)
+    }
+}
+
+private struct RefusalBubble: View {
+    @State private var appeared = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        VStack(spacing: -5) {
+            Text("NOPE!")
+                .font(.system(size: 36, weight: .black, design: .rounded))
+                .foregroundStyle(Color.black.opacity(0.78))
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .fill(Color.white.opacity(0.96))
+                        .shadow(color: .black.opacity(0.18), radius: 12, y: 6)
+                )
+
+            Image(systemName: "arrowtriangle.down.fill")
+                .font(.system(size: 22, weight: .bold))
+                .foregroundStyle(Color.white.opacity(0.96))
+        }
+        .scaleEffect(appeared ? 1 : (reduceMotion ? 0.96 : 0.78))
+        .opacity(appeared ? 1 : 0)
+        .onAppear {
+            withAnimation(
+                reduceMotion
+                    ? .easeOut(duration: 0.12)
+                    : .interpolatingSpring(stiffness: 330, damping: 18)
+            ) {
+                appeared = true
+            }
+        }
     }
 }
 
@@ -184,18 +252,29 @@ private struct TrackpadSparkView: View {
 
 private struct CenterKitty: View {
     let bounceTick: Int
+    let refusalTick: Int
     @State private var hop: CGFloat = 0
     @State private var squash: CGFloat = 1
+    @State private var refusalAngle = 0.0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         StickerView(name: StickerBook.idleKitty)
             .frame(width: 260, height: 260)
             .scaleEffect(x: squash, y: 1 + hop)
             .offset(y: -hop * 18)
+            .rotationEffect(.degrees(refusalAngle))
             .shadow(color: .black.opacity(0.22), radius: 18, y: 8)
             .onChange(of: bounceTick) { _, _ in
                 hop = 0
                 squash = 1
+                if reduceMotion {
+                    squash = 0.94
+                    withAnimation(.easeOut(duration: 0.18)) {
+                        squash = 1
+                    }
+                    return
+                }
                 withAnimation(.easeOut(duration: 0.07)) {
                     hop = 0.28
                     squash = 0.86
@@ -203,6 +282,19 @@ private struct CenterKitty: View {
                 withAnimation(.interpolatingSpring(stiffness: 320, damping: 11).delay(0.07)) {
                     hop = 0
                     squash = 1
+                }
+            }
+            .onChange(of: refusalTick) { _, _ in
+                guard !reduceMotion else { return }
+                refusalAngle = 0
+                withAnimation(.easeOut(duration: 0.05)) {
+                    refusalAngle = -8
+                }
+                withAnimation(.easeInOut(duration: 0.08).delay(0.05)) {
+                    refusalAngle = 8
+                }
+                withAnimation(.easeOut(duration: 0.10).delay(0.13)) {
+                    refusalAngle = 0
                 }
             }
     }

@@ -47,7 +47,8 @@ Any leftover key still makes a sound from its key code, so a full-size keyboard 
 
 | Action | How |
 | --- | --- |
-| Lock + overlay | `⌥⌘K`, or **Lock Keyboard** |
+| Lock + unlimited play | `⌥⌘K`, or **Lock Keyboard** |
+| Lock + two-minute play | **Lock for 2-Minute Play** |
 | Unlock | `⌥⌘K` again, or **Unlock** |
 | Follow a song | **Follow a Song** — Off by default. Five nursery songs on Z X C V B |
 | Hear the melody | **Hear Song** (only while a song is on) |
@@ -63,6 +64,10 @@ the overlay still appears but other apps can still receive keys.
 While locked, mouse and trackpad clicks are also contained by the overlay.
 Moving paints a short sparkle trail, and a deliberate click makes one surprise
 at the wand. Resting a hand on the trackpad does nothing.
+
+The optional two-minute mode limits play, not safety: when time runs out, the
+keyboard and pointer stay contained, songs and normal sounds stop, and the cat
+says **NOPE!** until a parent unlocks with `⌥⌘K` or the menu.
 
 There is no Dock icon. Look for the piano-keys icon in the menu bar. It turns
 into a lock while a session is active.

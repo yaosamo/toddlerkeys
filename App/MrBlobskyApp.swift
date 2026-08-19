@@ -57,10 +57,25 @@ private struct MenuBarContent: View {
 
             Text(session.lockStatus)
 
-            Button(session.isLocked ? "Unlock" : "Lock Keyboard") {
-                session.toggle()
+            if let playTimeStatus = session.playTimeStatus {
+                Text(playTimeStatus)
             }
-            .keyboardShortcut("k", modifiers: [.option, .command])
+
+            if session.isLocked {
+                Button("Unlock") {
+                    session.unlock()
+                }
+                .keyboardShortcut("k", modifiers: [.option, .command])
+            } else {
+                Button("Lock Keyboard") {
+                    session.lockAndShow()
+                }
+                .keyboardShortcut("k", modifiers: [.option, .command])
+
+                Button("Lock for 2-Minute Play") {
+                    session.lockForTwoMinutes()
+                }
+            }
 
             Button("Record a Sound…") {
                 RecordPanel.shared.show(playground: playground)

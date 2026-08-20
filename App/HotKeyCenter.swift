@@ -2,9 +2,9 @@ import Carbon
 import Foundation
 
 final class HotKeyCenter {
-    var onPressed: (() -> Void)?
+    var onPressed: ((GlobalHotKeyAction) -> Void)?
 
-    private var hotKeyRef: EventHotKeyRef?
+    private var hotKeyRefs: [EventHotKeyRef] = []
     private var handlerRef: EventHandlerRef?
 
     func register() {
@@ -24,37 +24,43 @@ final class HotKeyCenter {
         )
         guard installed == noErr else { return }
 
-        var hotKeyID = EventHotKeyID(signature: fourCharCode("TKEY"), id: 1)
-        let hotKeyStatus = RegisterEventHotKey(
-            ToggleHotKey.keyCode,
-            ToggleHotKey.carbonModifiers,
-            hotKeyID,
-            GetApplicationEventTarget(),
-            0,
-            &hotKeyRef
-        )
-        if hotKeyStatus != noErr {
-            print("Mr.Blobsky: RegisterEventHotKey failed (\(hotKeyStatus))")
+        for descriptor in GlobalHotKeys.all {
+            var hotKeyRef: EventHotKeyRef?
+            let hotKeyID = EventHotKeyID(signature: fourCharCode("TKEY"), id: descriptor.id)
+            let hotKeyStatus = RegisterEventHotKey(
+                descriptor.keyCode,
+                descriptor.carbonModifiers,
+                hotKeyID,
+                GetApplicationEventTarget(),
+                0,
+                &hotKeyRef
+            )
+            if hotKeyStatus == noErr, let hotKeyRef {
+                hotKeyRefs.append(hotKeyRef)
+            } else {
+                print("Mr.Blobsky: RegisterEventHotKey \(descriptor.displayName) failed (\(hotKeyStatus))")
+            }
         }
     }
 
     func unregister() {
-        if let hotKeyRef {
+        for hotKeyRef in hotKeyRefs {
             UnregisterEventHotKey(hotKeyRef)
-            self.hotKeyRef = nil
         }
+        hotKeyRefs.removeAll()
         if let handlerRef {
             RemoveEventHandler(handlerRef)
             self.handlerRef = nil
         }
     }
 
-    fileprivate func invoke() {
+    func invoke(id: UInt32) {
+        guard let action = GlobalHotKeys.descriptor(id: id)?.action else { return }
         if Thread.isMainThread {
-            onPressed?()
+            onPressed?(action)
         } else {
             DispatchQueue.main.async { [weak self] in
-                self?.onPressed?()
+                self?.onPressed?(action)
             }
         }
     }
@@ -77,7 +83,20 @@ private func hotKeyEventHandler(
     event: EventRef?,
     userData: UnsafeMutableRawPointer?
 ) -> OSStatus {
-    guard let userData else { return noErr }
-    Unmanaged<HotKeyCenter>.fromOpaque(userData).takeUnretainedValue().invoke()
+    guard let event, let userData else { return OSStatus(eventNotHandledErr) }
+    var hotKeyID = EventHotKeyID()
+    let status = GetEventParameter(
+        event,
+        EventParamName(kEventParamDirectObject),
+        EventParamType(typeEventHotKeyID),
+        nil,
+        MemoryLayout<EventHotKeyID>.size,
+        nil,
+        &hotKeyID
+    )
+    guard status == noErr, hotKeyID.signature == fourCharCode("TKEY") else {
+        return OSStatus(eventNotHandledErr)
+    }
+    Unmanaged<HotKeyCenter>.fromOpaque(userData).takeUnretainedValue().invoke(id: hotKeyID.id)
     return noErr
 }

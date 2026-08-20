@@ -12,13 +12,33 @@ final class AppSession: ObservableObject {
     @Published var isKeyboardLocked = false
     @Published var accessibilityTrusted = AccessibilityAuth.isTrusted
     @Published var lockStatus = "Idle"
+    @Published private(set) var playSessionState: PlaySessionState = .unlimited
+    @Published private(set) var refusalTick = 0
+
+    var isPlaytimeOver: Bool { playSessionState == .expired }
+
+    var playTimeStatus: String? {
+        switch playSessionState {
+        case .unlimited:
+            return nil
+        case .active(let secondsRemaining):
+            let minutes = secondsRemaining / 60
+            let seconds = secondsRemaining % 60
+            return String(format: "Play time %d:%02d", minutes, seconds)
+        case .expired:
+            return "Play time over • still locked"
+        }
+    }
 
     private let locker = KeyboardLocker()
     private let hotKey = HotKeyCenter()
     private let overlay = OverlayPanel()
     private let log = Logger(subsystem: "com.yaosamo.mrblobsky", category: "session")
     private var retryTask: Task<Void, Never>?
-    private var lastHotKeyAt = Date.distantPast
+    private var playTimerTask: Task<Void, Never>?
+    private var playSessionClock = PlaySessionClock(limit: .unlimited, startedAt: 0)
+    private var refusalGate = RefusalGate()
+    private var hotKeyGate = GlobalHotKeyGate()
 
     private init() {}
 
@@ -26,11 +46,17 @@ final class AppSession: ObservableObject {
         locker.onUnlock = { [weak self] in
             self?.unlock()
         }
+        locker.onHotKey = { [weak self] action in
+            self?.handleHotKey(action)
+        }
         locker.onStroke = { [weak self] stroke in
             self?.playLocked(stroke)
         }
-        hotKey.onPressed = { [weak self] in
-            self?.handleHotKey()
+        locker.onTrackpadPress = { [weak self] in
+            self?.handleTrackpadPress()
+        }
+        hotKey.onPressed = { [weak self] action in
+            self?.handleHotKey(action)
         }
         hotKey.register()
         playground.applyVoicePreference()
@@ -38,31 +64,44 @@ final class AppSession: ObservableObject {
         log.info("Session started. AX=\(self.accessibilityTrusted, privacy: .public) listen=\(AccessibilityAuth.canListenToKeys, privacy: .public)")
     }
 
-    func handleHotKey() {
-        let now = Date()
-        guard now.timeIntervalSince(lastHotKeyAt) > 0.4 else { return }
-        lastHotKeyAt = now
+    private func handleHotKey(_ action: GlobalHotKeyAction) {
+        guard hotKeyGate.accept(action, at: ProcessInfo.processInfo.systemUptime) else { return }
 
-        if isLocked {
-            // If the tap is running it already handles unlock. This path is
-            // for when the tap never started.
-            if !isKeyboardLocked {
-                unlock()
+        switch action {
+        case .toggleLock:
+            if isLocked {
+                // If the tap is running it already handles unlock. This path
+                // is for when the tap never started.
+                if !isKeyboardLocked {
+                    unlock()
+                }
+            } else {
+                lockAndShow()
             }
-            return
-        }
-        lockAndShow()
-    }
-
-    func toggle() {
-        if isLocked {
-            unlock()
-        } else {
-            lockAndShow()
+        case .twoMinutePlay:
+            if isLocked {
+                playground.clearSong()
+                beginPlaySession(limit: .twoMinutes)
+            } else {
+                lockForTwoMinutes()
+            }
+        case .song(let index):
+            guard SongBook.all.indices.contains(index) else { return }
+            followSong(SongBook.all[index])
         }
     }
 
     func lockAndShow() {
+        playground.clearSong()
+        lockAndShow(limit: .unlimited)
+    }
+
+    func lockForTwoMinutes() {
+        playground.clearSong()
+        lockAndShow(limit: .twoMinutes)
+    }
+
+    private func lockAndShow(limit: PlaySessionLimit) {
         refreshPermissions()
         if !AccessibilityAuth.canLockKeyboard {
             AccessibilityAuth.prompt()
@@ -71,6 +110,7 @@ final class AppSession: ObservableObject {
 
         isLocked = true
         playground.clearBursts()
+        beginPlaySession(limit: limit)
         overlay.show(session: self)
         attemptTap()
         log.info("Lock requested. tap=\(self.isKeyboardLocked, privacy: .public) status=\(self.lockStatus, privacy: .public)")
@@ -83,11 +123,17 @@ final class AppSession: ObservableObject {
     func unlock() {
         retryTask?.cancel()
         retryTask = nil
+        playTimerTask?.cancel()
+        playTimerTask = nil
+        playSessionClock = PlaySessionClock(limit: .unlimited, startedAt: 0)
+        playSessionState = .unlimited
+        refusalGate = RefusalGate()
+        refusalTick = 0
         locker.stop()
         isKeyboardLocked = false
         isLocked = false
         overlay.hide()
-        playground.stopSongPlayback()
+        playground.clearSong()
         playground.clearBursts()
         updateStatus()
         log.info("Unlocked")
@@ -96,7 +142,7 @@ final class AppSession: ObservableObject {
     func followSong(_ song: NurserySong) {
         playground.startSong(song)
         if !isLocked {
-            lockAndShow()
+            lockAndShow(limit: .unlimited)
         }
     }
 
@@ -107,7 +153,7 @@ final class AppSession: ObservableObject {
     func hearSong() {
         guard playground.song != nil else { return }
         if !isLocked {
-            lockAndShow()
+            lockAndShow(limit: .unlimited)
         }
         playground.hearSong()
     }
@@ -170,7 +216,61 @@ final class AppSession: ObservableObject {
         }
     }
 
+    private func beginPlaySession(limit: PlaySessionLimit) {
+        playTimerTask?.cancel()
+        playTimerTask = nil
+        refusalGate = RefusalGate()
+        refusalTick = 0
+
+        let now = ProcessInfo.processInfo.systemUptime
+        playSessionClock = PlaySessionClock(limit: limit, startedAt: now)
+        playSessionState = playSessionClock.state(at: now)
+        guard limit == .twoMinutes else { return }
+
+        playTimerTask = Task { @MainActor [weak self] in
+            while let self, !Task.isCancelled, self.isLocked {
+                try? await Task.sleep(nanoseconds: 250_000_000)
+                if Task.isCancelled { return }
+                self.refreshPlaySession()
+                if self.isPlaytimeOver { return }
+            }
+        }
+    }
+
+    private func refreshPlaySession() {
+        let nextState = playSessionClock.state(at: ProcessInfo.processInfo.systemUptime)
+        guard nextState != playSessionState else { return }
+        playSessionState = nextState
+        guard nextState == .expired else { return }
+
+        playground.stopSongPlayback()
+        playground.clearBursts()
+        refuse()
+        log.info("Two-minute play session expired; input remains locked")
+    }
+
+    private func handleTrackpadPress() {
+        if isPlaytimeOver {
+            refuse()
+        } else {
+            playground.playTrackpad()
+        }
+    }
+
+    private func refuse() {
+        guard refusalGate.accept(at: ProcessInfo.processInfo.systemUptime) else { return }
+        refusalTick += 1
+        playground.refuse()
+    }
+
     private func playLocked(_ stroke: LockedKeyStroke) {
+        if isPlaytimeOver {
+            if !stroke.isRepeat {
+                refuse()
+            }
+            return
+        }
+
         let key: ToyKey?
         if let mediaCode = stroke.mediaCode {
             key = KeyMap.toyKey(mediaCode: mediaCode)

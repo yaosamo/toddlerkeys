@@ -8,7 +8,6 @@ final class SoundEngine {
     private var players: [AVAudioPlayerNode] = []
     private var nextPlayer = 0
     private let poolSize = 32
-    private var started = false
 
     init() {
         engine.mainMixerNode.outputVolume = 0.8
@@ -35,6 +34,7 @@ final class SoundEngine {
 
     func playBuffer(_ buffer: AVAudioPCMBuffer) {
         startIfNeeded()
+        guard engine.isRunning else { return }
         let player = players[nextPlayer]
         nextPlayer = (nextPlayer + 1) % poolSize
         if player.isPlaying {
@@ -49,12 +49,12 @@ final class SoundEngine {
     }
 
     private func startIfNeeded() {
-        guard !started || !engine.isRunning else { return }
+        guard !engine.isRunning else { return }
+        engine.prepare()
         do {
             try engine.start()
-            started = true
         } catch {
-            started = false
+            return
         }
     }
 }

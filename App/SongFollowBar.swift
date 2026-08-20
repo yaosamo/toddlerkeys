@@ -12,12 +12,6 @@ struct SongFollowBar: View {
                 .foregroundStyle(.white)
                 .shadow(color: .black.opacity(0.25), radius: 8, y: 3)
 
-            if !completed {
-                Text("Play \(nextDisplay)")
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.8))
-            }
-
             HStack(spacing: 8) {
                 ForEach(visibleWindow, id: \.offset) { item in
                     let isCurrent = !completed && item.offset == index
@@ -39,10 +33,6 @@ struct SongFollowBar: View {
             }
             .animation(.spring(response: 0.32, dampingFraction: 0.7), value: index)
             .animation(.spring(response: 0.32, dampingFraction: 0.7), value: completed)
-
-            Text(song.hint)
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.7))
         }
         .padding(.horizontal, 22)
         .padding(.vertical, 16)
@@ -50,11 +40,6 @@ struct SongFollowBar: View {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(.black.opacity(0.28))
         )
-    }
-
-    private var nextDisplay: String {
-        guard index < song.notes.count else { return "" }
-        return song.notes[index].display
     }
 
     private var visibleWindow: [(offset: Int, step: SongStep)] {

@@ -12,12 +12,15 @@ struct LockedKeyStroke {
 
 final class KeyboardLocker: @unchecked Sendable {
     var onUnlock: (() -> Void)?
+    var onHotKey: ((GlobalHotKeyAction) -> Void)?
     var onStroke: ((LockedKeyStroke) -> Void)?
+    var onTrackpadPress: (() -> Void)?
 
     private let log = Logger(subsystem: "com.yaosamo.mrblobsky", category: "lock")
     private let stateLock = NSLock()
     private var tap: CFMachPort?
     private var source: CFRunLoopSource?
+    private var trackpadPressGate = TrackpadPressGate()
 
     private(set) var lastError: String?
 
@@ -31,11 +34,16 @@ final class KeyboardLocker: @unchecked Sendable {
         stop()
         lastError = nil
 
-        let mask =
-            (1 << CGEventType.keyDown.rawValue)
-            | (1 << CGEventType.keyUp.rawValue)
-            | (1 << CGEventType.flagsChanged.rawValue)
-            | (1 << MediaKey.systemDefinedType.rawValue)
+        let eventTypes: [CGEventType] = [
+            .keyDown, .keyUp, .flagsChanged, MediaKey.systemDefinedType,
+            .leftMouseDown, .leftMouseUp, .leftMouseDragged,
+            .rightMouseDown, .rightMouseUp, .rightMouseDragged,
+            .otherMouseDown, .otherMouseUp, .otherMouseDragged,
+            .scrollWheel
+        ]
+        let mask = eventTypes.reduce(CGEventMask(0)) { mask, type in
+            mask | (CGEventMask(1) << type.rawValue)
+        }
 
         let locations: [CGEventTapLocation] = [.cghidEventTap, .cgSessionEventTap]
         var created: CFMachPort?
@@ -77,6 +85,7 @@ final class KeyboardLocker: @unchecked Sendable {
         let source = self.source
         self.tap = nil
         self.source = nil
+        trackpadPressGate = TrackpadPressGate()
         stateLock.unlock()
 
         if let tap {
@@ -111,12 +120,16 @@ final class KeyboardLocker: @unchecked Sendable {
         }
 
         if type == .keyDown,
-           ToggleHotKey.matches(
+           let action = GlobalHotKeys.action(
             keyCode: event.getIntegerValueField(.keyboardEventKeycode),
             flags: event.flags
            ) {
             DispatchQueue.main.async { [weak self] in
-                self?.onUnlock?()
+                if action == .toggleLock {
+                    self?.onUnlock?()
+                } else {
+                    self?.onHotKey?(action)
+                }
             }
             return nil
         }
@@ -130,6 +143,18 @@ final class KeyboardLocker: @unchecked Sendable {
             )
             DispatchQueue.main.async { [weak self] in
                 self?.onStroke?(stroke)
+            }
+        }
+
+        stateLock.lock()
+        let acceptedTrackpadPress = trackpadPressGate.accept(
+            type: type,
+            at: ProcessInfo.processInfo.systemUptime
+        )
+        stateLock.unlock()
+        if acceptedTrackpadPress {
+            DispatchQueue.main.async { [weak self] in
+                self?.onTrackpadPress?()
             }
         }
 

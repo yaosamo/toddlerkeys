@@ -9,38 +9,54 @@ final class VoiceBank: ObservableObject {
 
     @Published private(set) var hasSample = false
     @Published var usesVoice: Bool {
-        didSet { UserDefaults.standard.set(usesVoice, forKey: Self.usesVoiceKey) }
+        didSet { userDefaults.set(usesVoice, forKey: Self.usesVoiceKey) }
     }
 
     var shouldPlayVoice: Bool { usesVoice && hasSample }
 
     private static let usesVoiceKey = "MrBlobsky.usesVoice"
     private static let legacyUsesVoiceKey = "ToddlerKeys.usesVoice"
+    private let recordingURL: URL
+    private let userDefaults: UserDefaults
+    private let migratesLegacyRecording: Bool
     private var samples: [Float] = []
     private var generation = 0
     private var cache: [CacheKey: AVAudioPCMBuffer] = [:]
 
-    private init() {
-        if UserDefaults.standard.object(forKey: Self.usesVoiceKey) == nil,
-           UserDefaults.standard.object(forKey: Self.legacyUsesVoiceKey) != nil
+    private convenience init() {
+        self.init(
+            recordingURL: Self.fileURL,
+            userDefaults: .standard,
+            migratesLegacyRecording: true
+        )
+    }
+
+    init(recordingURL: URL, userDefaults: UserDefaults, migratesLegacyRecording: Bool = false) {
+        self.recordingURL = recordingURL
+        self.userDefaults = userDefaults
+        self.migratesLegacyRecording = migratesLegacyRecording
+        if userDefaults.object(forKey: Self.usesVoiceKey) == nil,
+           userDefaults.object(forKey: Self.legacyUsesVoiceKey) != nil
         {
-            usesVoice = UserDefaults.standard.bool(forKey: Self.legacyUsesVoiceKey)
+            usesVoice = userDefaults.bool(forKey: Self.legacyUsesVoiceKey)
         } else {
-            usesVoice = UserDefaults.standard.bool(forKey: Self.usesVoiceKey)
+            usesVoice = userDefaults.bool(forKey: Self.usesVoiceKey)
         }
         loadFromDisk()
     }
 
     func loadFromDisk() {
-        Self.migrateLegacyRecordingIfNeeded()
-        guard FileManager.default.fileExists(atPath: Self.fileURL.path) else {
+        if migratesLegacyRecording {
+            Self.migrateLegacyRecordingIfNeeded()
+        }
+        guard FileManager.default.fileExists(atPath: recordingURL.path) else {
             samples = []
             hasSample = false
             cache.removeAll()
             return
         }
         do {
-            let loaded = try Self.readMono44100(url: Self.fileURL)
+            let loaded = try Self.readMono44100(url: recordingURL)
             installInMemory(Self.prepare(loaded), persist: false)
         } catch {
             samples = []
@@ -60,7 +76,7 @@ final class VoiceBank: ObservableObject {
         usesVoice = false
         generation += 1
         cache.removeAll()
-        try? FileManager.default.removeItem(at: Self.fileURL)
+        try? FileManager.default.removeItem(at: recordingURL)
     }
 
     func previewBuffer(from raw: [Float]? = nil) -> AVAudioPCMBuffer {
@@ -93,14 +109,14 @@ final class VoiceBank: ObservableObject {
         generation += 1
         cache.removeAll()
         if persist, hasSample {
-            try? Self.writeMono44100(samples, url: Self.fileURL)
+            try? Self.writeMono44100(samples, url: recordingURL)
         }
         if !hasSample {
             usesVoice = false
         }
     }
 
-    private func render(_ source: [Float], recipe: Recipe, capSeconds: Double = 1.35) -> AVAudioPCMBuffer {
+    private func render(_ source: [Float], recipe: Recipe, capSeconds: Double = 1.85) -> AVAudioPCMBuffer {
         let primary = bake(source, recipe: recipe, capSeconds: capSeconds)
         var mix = primary
         if let layerRate = recipe.layerRate {

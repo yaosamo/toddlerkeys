@@ -38,6 +38,8 @@ The built app lands under Xcode’s DerivedData. From Xcode, Run is the easy pat
 | Arrow keys | Slides |
 | Keypad, Home, End, Page Up/Down | Same family of notes and effects |
 | On-screen keys | Full laptop layout, clickable |
+| Trackpad movement | Paints a colorful magic-wand trail |
+| Trackpad click/tap | A rotating surprise sound and sticker burst at the wand |
 
 Any leftover key still makes a sound from its key code, so a full-size keyboard is covered too.
 
@@ -45,9 +47,10 @@ Any leftover key still makes a sound from its key code, so a full-size keyboard 
 
 | Action | How |
 | --- | --- |
-| Lock + overlay | `⌥⌘K`, or **Lock Keyboard** |
+| Lock + unlimited play | `⌥⌘K`, or **Lock Keyboard** |
+| Lock + two-minute play | `⌥⌘T`, or **Lock for 2-Minute Play** |
 | Unlock | `⌥⌘K` again, or **Unlock** |
-| Follow a song | **Follow a Song** — Off by default. Five nursery songs on Z X C V B |
+| Follow a song | `⌥⌘1` through `⌥⌘5`, or **Follow a Song** — five nursery songs on Z X C V B |
 | Hear the melody | **Hear Song** (only while a song is on) |
 | About | **About Mr.Blobsky** |
 | Record a sound | **Record a Sound…** — one short clip becomes every key |
@@ -58,6 +61,21 @@ Keyboard lock needs **Accessibility** and sometimes **Input Monitoring**. macOS
 will prompt; you can also use **Allow Keyboard Access…**. Until those are on,
 the overlay still appears but other apps can still receive keys.
 
+While locked, mouse and trackpad clicks are also contained by the overlay.
+Moving paints a short sparkle trail, and a deliberate click makes one surprise
+at the wand. Resting a hand on the trackpad does nothing.
+
+The optional two-minute mode limits play, not safety: when time runs out, the
+keyboard and pointer stay contained, songs and normal sounds stop, and the cat
+says **NOPE!** until a parent unlocks with `⌥⌘K` or the menu.
+
+Song shortcuts follow the menu order: `⌥⌘1` Mary Had a Little Lamb, `⌥⌘2`
+Hot Cross Buns, `⌥⌘3` Jingle Bells, `⌥⌘4` Rain Rain Go Away, and `⌥⌘5` The
+Farmer in the Dell. Each shortcut selects the song and opens the locked play
+screen ready to follow along. The number shortcuts also switch songs immediately
+while the play screen is already locked. Starting unlimited or two-minute play
+normally clears the previous song and returns to free play.
+
 There is no Dock icon. Look for the piano-keys icon in the menu bar. It turns
 into a lock while a session is active.
 
@@ -67,8 +85,8 @@ into a lock while a session is active.
 - Simple global hotkey (`⌥⌘K`) to lock the keyboard
 - Full-screen overlay of the last pressed key
 - Polyphonic synthesized audio, or a recording you make
-- Record a short clip and hear it pitched across the keyboard
+- Record a short clip and hear it pitched across the keyboard; recording again replaces the previous clip
 
 ## Later, maybe
 
-A configurable hotkey, and a mouse lock.
+A configurable hotkey.

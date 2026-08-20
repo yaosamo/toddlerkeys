@@ -38,7 +38,7 @@ final class HotKeyCenter {
             if hotKeyStatus == noErr, let hotKeyRef {
                 hotKeyRefs.append(hotKeyRef)
             } else {
-                print("Mr.Blobsky: RegisterEventHotKey \(descriptor.displayName) failed (\(hotKeyStatus))")
+                print("Lapki: RegisterEventHotKey \(descriptor.displayName) failed (\(hotKeyStatus))")
             }
         }
     }

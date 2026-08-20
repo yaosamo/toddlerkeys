@@ -25,6 +25,58 @@ enum HotKeySourcePolicy {
     }
 }
 
+enum SongHotKeyEffect: Equatable {
+    case unlock
+    case follow
+}
+
+enum SongHotKeyPolicy {
+    /// Same song while locked unlocks; any other song selects/follows (and locks if needed).
+    static func effect(isLocked: Bool, selectedSongID: String?, requestedSongID: String) -> SongHotKeyEffect {
+        if isLocked, selectedSongID == requestedSongID {
+            return .unlock
+        }
+        return .follow
+    }
+}
+
+/// Ignores the duplicate delivery of the chord that just flipped lock state.
+/// On that key's key-up, suppression shrinks to a tiny tail so the next press
+/// can unlock immediately without waiting out a long debounce.
+struct LockChordEchoGate {
+    private var action: GlobalHotKeyAction?
+    private var keyCode: UInt32?
+    private var until: TimeInterval = 0
+
+    mutating func suppressEcho(
+        of action: GlobalHotKeyAction,
+        keyCode: UInt32,
+        at time: TimeInterval,
+        for interval: TimeInterval = 0.15
+    ) {
+        self.action = action
+        self.keyCode = keyCode
+        self.until = time + interval
+    }
+
+    mutating func clear() {
+        action = nil
+        keyCode = nil
+        until = 0
+    }
+
+    mutating func clearOnKeyUp(_ keyCode: UInt32, at time: TimeInterval, tail: TimeInterval = 0.05) {
+        guard self.keyCode == keyCode, action != nil else { return }
+        // Keep a short tail for deferred main-queue echoes after release.
+        until = time + tail
+    }
+
+    func shouldIgnore(_ action: GlobalHotKeyAction, at time: TimeInterval) -> Bool {
+        guard let suppressed = self.action else { return false }
+        return action == suppressed && time < until
+    }
+}
+
 struct GlobalHotKeyDescriptor: Equatable {
     let id: UInt32
     let keyCode: UInt32
@@ -72,6 +124,10 @@ enum GlobalHotKeys {
 
     static func descriptor(id: UInt32) -> GlobalHotKeyDescriptor? {
         all.first { $0.id == id }
+    }
+
+    static func descriptor(action: GlobalHotKeyAction) -> GlobalHotKeyDescriptor? {
+        all.first { $0.action == action }
     }
 
     static func descriptor(keyCode: Int64, flags: CGEventFlags) -> GlobalHotKeyDescriptor? {

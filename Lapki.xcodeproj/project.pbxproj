@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		AA0000000000000000000003 /* MrBlobsky.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MrBlobsky.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA0000000000000000000003 /* Lapki.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lapki.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -40,7 +40,7 @@
 		AA0000000000000000000015 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				AA0000000000000000000003 /* MrBlobsky.app */,
+				AA0000000000000000000003 /* Lapki.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,9 +48,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		AA0000000000000000000002 /* MrBlobsky */ = {
+		AA0000000000000000000002 /* Lapki */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AA0000000000000000000009 /* Build configuration list for PBXNativeTarget "MrBlobsky" */;
+			buildConfigurationList = AA0000000000000000000009 /* Build configuration list for PBXNativeTarget "Lapki" */;
 			buildPhases = (
 				AA0000000000000000000005 /* Sources */,
 				AA0000000000000000000006 /* Frameworks */,
@@ -63,9 +63,9 @@
 			fileSystemSynchronizedGroups = (
 				AA0000000000000000000004 /* App */,
 			);
-			name = MrBlobsky;
-			productName = MrBlobsky;
-			productReference = AA0000000000000000000003 /* MrBlobsky.app */;
+			name = Lapki;
+			productName = Lapki;
+			productReference = AA0000000000000000000003 /* Lapki.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -83,7 +83,7 @@
 					};
 				};
 			};
-			buildConfigurationList = AA0000000000000000000008 /* Build configuration list for PBXProject "MrBlobsky" */;
+			buildConfigurationList = AA0000000000000000000008 /* Build configuration list for PBXProject "Lapki" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -97,7 +97,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				AA0000000000000000000002 /* MrBlobsky */,
+				AA0000000000000000000002 /* Lapki */,
 			);
 		};
 /* End PBXProject section */
@@ -246,32 +246,42 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = App/MrBlobsky.entitlements;
+				CODE_SIGN_ENTITLEMENTS = App/Lapki.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 6J57A4298A;
-				ENABLE_APP_SANDBOX = NO;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Mr.Blobsky";
-				INFOPLIST_KEY_CFBundleName = "Mr.Blobsky";
+				INFOPLIST_KEY_CFBundleDisplayName = Lapki;
+				INFOPLIST_KEY_CFBundleName = Lapki;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHighResolutionCapable = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Yaosamo";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Mr.Blobsky records a short sound you make, then plays a pitched version when you press keys. The recording stays on this Mac.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Lapki records a short sound you make, then plays a pitched version when you press keys. The recording stays on this Mac.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.6;
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yaosamo.mrblobsky;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yaosamo.lapki;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -284,30 +294,41 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = App/MrBlobsky.entitlements;
+				CODE_SIGN_ENTITLEMENTS = App/Lapki.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 6J57A4298A;
-				ENABLE_APP_SANDBOX = NO;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Mr.Blobsky";
-				INFOPLIST_KEY_CFBundleName = "Mr.Blobsky";
+				INFOPLIST_KEY_CFBundleDisplayName = Lapki;
+				INFOPLIST_KEY_CFBundleName = Lapki;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHighResolutionCapable = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Yaosamo";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Mr.Blobsky records a short sound you make, then plays a pitched version when you press keys. The recording stays on this Mac.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Lapki records a short sound you make, then plays a pitched version when you press keys. The recording stays on this Mac.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.6;
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yaosamo.mrblobsky;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yaosamo.lapki;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -318,7 +339,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		AA0000000000000000000008 /* Build configuration list for PBXProject "MrBlobsky" */ = {
+		AA0000000000000000000008 /* Build configuration list for PBXProject "Lapki" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AA0000000000000000000010 /* Debug */,
@@ -327,7 +348,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		AA0000000000000000000009 /* Build configuration list for PBXNativeTarget "MrBlobsky" */ = {
+		AA0000000000000000000009 /* Build configuration list for PBXNativeTarget "Lapki" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AA0000000000000000000012 /* Debug */,

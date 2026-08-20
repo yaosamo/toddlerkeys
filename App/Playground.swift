@@ -41,6 +41,7 @@ final class Playground: ObservableObject {
     let sound = SoundEngine()
     private var demoTask: Task<Void, Never>?
     private var celebrateTask: Task<Void, Never>?
+    private var waitTask: Task<Void, Never>?
     private var trackpadSurpriseIndex = 0
     private var trackpadMotionIndex = 0
 
@@ -54,8 +55,8 @@ final class Playground: ObservableObject {
     ]
 
     var nextKeyID: String? {
-        guard let song, !songCompleted, songIndex < song.notes.count else { return nil }
-        return song.notes[songIndex].keyID
+        guard let song, !songCompleted else { return nil }
+        return song.nextKeyID(from: songIndex)
     }
 
     func handle(event: NSEvent) -> NSEvent? {
@@ -161,6 +162,7 @@ final class Playground: ObservableObject {
     func startSong(_ newSong: NurserySong) {
         demoTask?.cancel()
         celebrateTask?.cancel()
+        waitTask?.cancel()
         song = newSong
         songIndex = 0
         songCompleted = false
@@ -169,6 +171,7 @@ final class Playground: ObservableObject {
     func clearSong() {
         demoTask?.cancel()
         celebrateTask?.cancel()
+        waitTask?.cancel()
         song = nil
         songIndex = 0
         songCompleted = false
@@ -178,6 +181,7 @@ final class Playground: ObservableObject {
         guard let song else { return }
         demoTask?.cancel()
         celebrateTask?.cancel()
+        waitTask?.cancel()
         songCompleted = false
         songIndex = 0
 
@@ -185,7 +189,8 @@ final class Playground: ObservableObject {
             for (index, step) in song.notes.enumerated() {
                 if Task.isCancelled { return }
                 songIndex = index
-                if let key = KeyMap.all.first(where: { $0.id == step.keyID }) {
+                if let keyID = step.keyID,
+                   let key = KeyMap.all.first(where: { $0.id == keyID }) {
                     play(key, countsForSong: false)
                 }
                 let nanoseconds = UInt64(max(0.26, step.beats * 0.4) * 1_000_000_000)
@@ -213,25 +218,50 @@ final class Playground: ObservableObject {
     func stopSongPlayback() {
         demoTask?.cancel()
         celebrateTask?.cancel()
+        waitTask?.cancel()
     }
 
     private func registerSongHit(_ key: ToyKey) {
         guard let song, !songCompleted, songIndex < song.notes.count else { return }
-        guard key.id == song.notes[songIndex].keyID else { return }
+        guard case .note(let expectedKeyID, _) = song.notes[songIndex], key.id == expectedKeyID else {
+            return
+        }
 
-        songIndex += 1
-        if songIndex >= song.notes.count {
-            songCompleted = true
-            celebrateTask?.cancel()
-            celebrateTask = Task { @MainActor in
-                try? await Task.sleep(nanoseconds: 280_000_000)
-                if Task.isCancelled { return }
-                sound.play(.effect(.fanfare), instrument: instrument)
-                try? await Task.sleep(nanoseconds: 1_800_000_000)
-                if Task.isCancelled { return }
-                songIndex = 0
-                songCompleted = false
+        let nextIndex = songIndex + 1
+        if nextIndex < song.notes.count, case .wait(let beats) = song.notes[nextIndex] {
+            songIndex = nextIndex
+            waitTask?.cancel()
+            let songID = song.id
+            waitTask = Task { @MainActor [weak self] in
+                let nanoseconds = UInt64(max(0.26, beats * 0.4) * 1_000_000_000)
+                try? await Task.sleep(nanoseconds: nanoseconds)
+                guard let self,
+                      !Task.isCancelled,
+                      self.song?.id == songID,
+                      self.songIndex == nextIndex else {
+                    return
+                }
+                self.songIndex = nextIndex + 1
             }
+            return
+        }
+
+        songIndex = nextIndex
+        finishSongIfNeeded(song)
+    }
+
+    private func finishSongIfNeeded(_ song: NurserySong) {
+        guard songIndex >= song.notes.count else { return }
+        songCompleted = true
+        celebrateTask?.cancel()
+        celebrateTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 280_000_000)
+            if Task.isCancelled { return }
+            sound.play(.effect(.fanfare), instrument: instrument)
+            try? await Task.sleep(nanoseconds: 1_800_000_000)
+            if Task.isCancelled { return }
+            songIndex = 0
+            songCompleted = false
         }
     }
 

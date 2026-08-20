@@ -142,7 +142,7 @@ final class RecorderController: NSObject, ObservableObject, AVAudioRecorderDeleg
 
         stopRecorder()
         let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("mrblobsky-\(UUID().uuidString).wav")
+            .appendingPathComponent("lapki-\(UUID().uuidString).wav")
         takeURL = url
         let settings: [String: Any] = [
             AVFormatIDKey: Int(kAudioFormatLinearPCM),
@@ -288,7 +288,7 @@ private struct RecordView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Record a Sound")
                 .font(.system(size: 20, weight: .bold))
-            Text("Say a word, tap the table, or make a silly noise. Mr.Blobsky turns that clip into every key — higher, lower, backwards, chopped.")
+            Text("Say a word, tap the table, or make a silly noise. Lapki turns that clip into every key — higher, lower, backwards, chopped.")
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

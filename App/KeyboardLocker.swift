@@ -12,10 +12,11 @@ struct LockedKeyStroke {
 
 final class KeyboardLocker: @unchecked Sendable {
     var onHotKey: ((GlobalHotKeyAction) -> Void)?
+    var onHotKeyKeyUp: ((UInt32) -> Void)?
     var onStroke: ((LockedKeyStroke) -> Void)?
     var onTrackpadPress: (() -> Void)?
 
-    private let log = Logger(subsystem: "com.yaosamo.mrblobsky", category: "lock")
+    private let log = Logger(subsystem: "com.yaosamo.lapki", category: "lock")
     private let stateLock = NSLock()
     private var tap: CFMachPort?
     private var source: CFRunLoopSource?
@@ -127,6 +128,16 @@ final class KeyboardLocker: @unchecked Sendable {
             if !isRepeat {
                 DispatchQueue.main.async { [weak self] in
                     self?.onHotKey?(descriptor.action)
+                }
+            }
+            return nil
+        }
+
+        if type == .keyUp {
+            let keyCode = UInt32(event.getIntegerValueField(.keyboardEventKeycode))
+            if GlobalHotKeys.all.contains(where: { $0.keyCode == keyCode }) {
+                DispatchQueue.main.async { [weak self] in
+                    self?.onHotKeyKeyUp?(keyCode)
                 }
             }
             return nil

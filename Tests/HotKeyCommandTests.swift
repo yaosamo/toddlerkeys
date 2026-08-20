@@ -22,6 +22,8 @@ private enum HotKeyCommandTests {
         ignoresUnknownCommands()
         dispatchesKnownCommandsOnly()
         preservesExactParentUnlockChord()
+        mapsLockedEventTapCommands()
+        debouncesOnlyRepeatedActions()
 
         guard failures == 0 else { exit(1) }
         print("Global hotkey tests passed")
@@ -75,5 +77,47 @@ private enum HotKeyCommandTests {
             !ToggleHotKey.matches(keyCode: Int64(kVK_ANSI_T), flags: required),
             "keeps option-command-T out of the unlock path"
         )
+    }
+
+    private static func mapsLockedEventTapCommands() {
+        let required: CGEventFlags = [.maskAlternate, .maskCommand]
+        expect(
+            GlobalHotKeys.action(keyCode: Int64(kVK_ANSI_K), flags: required) == .toggleLock,
+            "maps option-command-K inside the locked event tap"
+        )
+        expect(
+            GlobalHotKeys.action(keyCode: Int64(kVK_ANSI_T), flags: required) == .twoMinutePlay,
+            "maps option-command-T inside the locked event tap"
+        )
+
+        for (index, descriptor) in GlobalHotKeys.songs.enumerated() {
+            expect(
+                GlobalHotKeys.action(keyCode: Int64(descriptor.keyCode), flags: required) == .song(index: index),
+                "maps option-command-\(index + 1) inside the locked event tap"
+            )
+        }
+
+        expect(
+            GlobalHotKeys.action(keyCode: Int64(kVK_ANSI_1), flags: required.union(.maskShift)) == nil,
+            "rejects song chords with extra shift"
+        )
+        expect(
+            GlobalHotKeys.action(keyCode: Int64(kVK_ANSI_1), flags: required.union(.maskControl)) == nil,
+            "rejects song chords with extra control"
+        )
+        expect(
+            GlobalHotKeys.action(keyCode: Int64(kVK_ANSI_A), flags: required) == nil,
+            "rejects unrelated option-command keys"
+        )
+    }
+
+    private static func debouncesOnlyRepeatedActions() {
+        var gate = GlobalHotKeyGate(minimumInterval: 0.4)
+
+        expect(gate.accept(.song(index: 0), at: 10), "accepts the first song shortcut")
+        expect(!gate.accept(.song(index: 0), at: 10.2), "suppresses a rapid repeat of the same song")
+        expect(gate.accept(.song(index: 1), at: 10.21), "accepts a different song immediately")
+        expect(!gate.accept(.song(index: 1), at: 10.3), "suppresses a repeat of the replacement song")
+        expect(gate.accept(.song(index: 1), at: 10.7), "accepts the same song after the debounce interval")
     }
 }

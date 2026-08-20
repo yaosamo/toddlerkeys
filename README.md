@@ -72,7 +72,9 @@ says **NOPE!** until a parent unlocks with `⌥⌘K` or the menu.
 Song shortcuts follow the menu order: `⌥⌘1` Mary Had a Little Lamb, `⌥⌘2`
 Hot Cross Buns, `⌥⌘3` Jingle Bells, `⌥⌘4` Rain Rain Go Away, and `⌥⌘5` The
 Farmer in the Dell. Each shortcut selects the song and opens the locked play
-screen ready to follow along.
+screen ready to follow along. The number shortcuts also switch songs immediately
+while the play screen is already locked. Starting unlimited or two-minute play
+normally clears the previous song and returns to free play.
 
 There is no Dock icon. Look for the piano-keys icon in the menu bar. It turns
 into a lock while a session is active.

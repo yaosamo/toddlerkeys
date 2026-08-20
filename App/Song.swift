@@ -14,7 +14,6 @@ struct SongStep: Equatable {
 struct NurserySong: Identifiable, Equatable {
     let id: String
     let title: String
-    let hint: String
     let notes: [SongStep]
 }
 
@@ -24,7 +23,6 @@ enum SongBook {
     static let mary = NurserySong(
         id: "mary",
         title: "Mary Had a Little Lamb",
-        hint: "Use Z X C V on the bottom row",
         notes: [
             .note("c"), .note("x"), .note("z"), .note("x"),
             .note("c"), .note("c"), .note("c", 1.4),
@@ -40,7 +38,6 @@ enum SongBook {
     static let hotCrossBuns = NurserySong(
         id: "hot-cross-buns",
         title: "Hot Cross Buns",
-        hint: "Use Z X C on the bottom row",
         notes: [
             .note("c"), .note("x"), .note("z", 1.4),
             .note("c"), .note("x"), .note("z", 1.4),
@@ -53,7 +50,6 @@ enum SongBook {
     static let jingleBells = NurserySong(
         id: "jingle-bells",
         title: "Jingle Bells",
-        hint: "Use Z X C V on the bottom row",
         notes: [
             .note("c"), .note("c"), .note("c", 1.4),
             .note("c"), .note("c"), .note("c", 1.4),
@@ -65,7 +61,6 @@ enum SongBook {
     static let rainRain = NurserySong(
         id: "rain-rain",
         title: "Rain Rain Go Away",
-        hint: "Use Z X C V B on the bottom row",
         notes: [
             .note("v"), .note("c"), .note("v"), .note("c", 1.3),
             .note("v"), .note("b"), .note("v"), .note("c", 1.3),
@@ -77,7 +72,6 @@ enum SongBook {
     static let farmerInTheDell = NurserySong(
         id: "farmer",
         title: "The Farmer in the Dell",
-        hint: "Use Z X C V B on the bottom row",
         notes: [
             .note("z"), .note("z"), .note("z"), .note("v", 1.3),
             .note("b"), .note("b"), .note("v", 1.3),

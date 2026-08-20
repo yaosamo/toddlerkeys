@@ -38,13 +38,16 @@ final class AppSession: ObservableObject {
     private var playTimerTask: Task<Void, Never>?
     private var playSessionClock = PlaySessionClock(limit: .unlimited, startedAt: 0)
     private var refusalGate = RefusalGate()
-    private var lastHotKeyAt = Date.distantPast
+    private var hotKeyGate = GlobalHotKeyGate()
 
     private init() {}
 
     func start() {
         locker.onUnlock = { [weak self] in
             self?.unlock()
+        }
+        locker.onHotKey = { [weak self] action in
+            self?.handleHotKey(action)
         }
         locker.onStroke = { [weak self] stroke in
             self?.playLocked(stroke)
@@ -62,25 +65,26 @@ final class AppSession: ObservableObject {
     }
 
     private func handleHotKey(_ action: GlobalHotKeyAction) {
-        let now = Date()
-        guard now.timeIntervalSince(lastHotKeyAt) > 0.4 else { return }
-        lastHotKeyAt = now
+        guard hotKeyGate.accept(action, at: ProcessInfo.processInfo.systemUptime) else { return }
 
-        if action == .toggleLock, isLocked {
-            // If the tap is running it already handles unlock. This path is
-            // for when the tap never started.
-            if !isKeyboardLocked {
-                unlock()
-            }
-            return
-        }
-
-        guard !isLocked else { return }
         switch action {
         case .toggleLock:
-            lockAndShow()
+            if isLocked {
+                // If the tap is running it already handles unlock. This path
+                // is for when the tap never started.
+                if !isKeyboardLocked {
+                    unlock()
+                }
+            } else {
+                lockAndShow()
+            }
         case .twoMinutePlay:
-            lockForTwoMinutes()
+            if isLocked {
+                playground.clearSong()
+                beginPlaySession(limit: .twoMinutes)
+            } else {
+                lockForTwoMinutes()
+            }
         case .song(let index):
             guard SongBook.all.indices.contains(index) else { return }
             followSong(SongBook.all[index])
@@ -88,10 +92,12 @@ final class AppSession: ObservableObject {
     }
 
     func lockAndShow() {
+        playground.clearSong()
         lockAndShow(limit: .unlimited)
     }
 
     func lockForTwoMinutes() {
+        playground.clearSong()
         lockAndShow(limit: .twoMinutes)
     }
 
@@ -127,7 +133,7 @@ final class AppSession: ObservableObject {
         isKeyboardLocked = false
         isLocked = false
         overlay.hide()
-        playground.stopSongPlayback()
+        playground.clearSong()
         playground.clearBursts()
         updateStatus()
         log.info("Unlocked")
@@ -136,7 +142,7 @@ final class AppSession: ObservableObject {
     func followSong(_ song: NurserySong) {
         playground.startSong(song)
         if !isLocked {
-            lockAndShow()
+            lockAndShow(limit: .unlimited)
         }
     }
 
@@ -147,7 +153,7 @@ final class AppSession: ObservableObject {
     func hearSong() {
         guard playground.song != nil else { return }
         if !isLocked {
-            lockAndShow()
+            lockAndShow(limit: .unlimited)
         }
         playground.hearSong()
     }

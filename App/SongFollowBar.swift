@@ -39,10 +39,6 @@ struct SongFollowBar: View {
             }
             .animation(.spring(response: 0.32, dampingFraction: 0.7), value: index)
             .animation(.spring(response: 0.32, dampingFraction: 0.7), value: completed)
-
-            Text(song.hint)
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.7))
         }
         .padding(.horizontal, 22)
         .padding(.vertical, 16)

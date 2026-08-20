@@ -51,7 +51,7 @@ Any leftover key still makes a sound from its key code, so a full-size keyboard 
 | Lock + two-minute play | `⌥⌘T`, or **Lock for 2-Minute Play** |
 | Unlock | `⌥⌘K` again, or **Unlock** |
 | Follow a song | `⌥⌘1` through `⌥⌘5`, or **Follow a Song** — five nursery songs on Z X C V B |
-| Hear the melody | **Hear Song** (only while a song is on) |
+| Play the selected melody | `⌥⌘P`, or **Play Song** (only while a song is on) |
 | About | **About Mr.Blobsky** |
 | Record a sound | **Record a Sound…** — one short clip becomes every key |
 | Use that clip | **Use My Sound** / **Use Built-in Sounds** |

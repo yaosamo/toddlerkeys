@@ -1,6 +1,6 @@
 # Privacy
 
-Mr.Blobsky does not collect, store, or send personal data.
+Mr.Blobsky does not collect or send personal data to the developer or any third party. An optional voice recording is stored only on your Mac, as described below.
 
 There are no accounts, analytics, advertising, or crash reporters. The app does not talk to the network for its toy features.
 

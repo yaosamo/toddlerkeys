@@ -23,7 +23,8 @@ private enum HotKeyCommandTests {
         dispatchesKnownCommandsOnly()
         preservesExactParentUnlockChord()
         mapsLockedEventTapCommands()
-        debouncesOnlyRepeatedActions()
+        ignoresLockedHotKeyRepeats()
+        acceptsOneShortcutSourcePerSessionState()
 
         guard failures == 0 else { exit(1) }
         print("Global hotkey tests passed")
@@ -33,6 +34,8 @@ private enum HotKeyCommandTests {
         expect(GlobalHotKeys.descriptor(id: 1)?.action == .toggleLock, "maps K to unlimited lock toggle")
         expect(GlobalHotKeys.descriptor(id: 2)?.action == .twoMinutePlay, "maps T to two-minute play")
         expect(GlobalHotKeys.descriptor(id: 2)?.displayName == "⌥⌘T", "shows the timer shortcut")
+        expect(GlobalHotKeys.descriptor(id: 3)?.action == .playSong, "maps P to play the selected song")
+        expect(GlobalHotKeys.descriptor(id: 3)?.displayName == "⌥⌘P", "shows the play-song shortcut")
     }
 
     private static func mapsEverySongCommand() {
@@ -60,10 +63,11 @@ private enum HotKeyCommandTests {
         center.onPressed = { actions.append($0) }
 
         center.invoke(id: 2)
+        center.invoke(id: 3)
         center.invoke(id: 13)
         center.invoke(id: 999)
 
-        expect(actions == [.twoMinutePlay, .song(index: 2)], "dispatches only registered commands")
+        expect(actions == [.twoMinutePlay, .playSong, .song(index: 2)], "dispatches only registered commands")
     }
 
     private static func preservesExactParentUnlockChord() {
@@ -89,6 +93,10 @@ private enum HotKeyCommandTests {
             GlobalHotKeys.action(keyCode: Int64(kVK_ANSI_T), flags: required) == .twoMinutePlay,
             "maps option-command-T inside the locked event tap"
         )
+        expect(
+            GlobalHotKeys.action(keyCode: Int64(kVK_ANSI_P), flags: required) == .playSong,
+            "maps option-command-P inside the locked event tap"
+        )
 
         for (index, descriptor) in GlobalHotKeys.songs.enumerated() {
             expect(
@@ -111,13 +119,46 @@ private enum HotKeyCommandTests {
         )
     }
 
-    private static func debouncesOnlyRepeatedActions() {
-        var gate = GlobalHotKeyGate(minimumInterval: 0.4)
+    private static func ignoresLockedHotKeyRepeats() {
+        let required: CGEventFlags = [.maskAlternate, .maskCommand]
+        expect(
+            GlobalHotKeys.action(
+                keyCode: Int64(kVK_ANSI_1),
+                flags: required,
+                isRepeat: true
+            ) == nil,
+            "ignores repeated song key-down events"
+        )
+        expect(
+            GlobalHotKeys.action(
+                keyCode: Int64(kVK_ANSI_K),
+                flags: required,
+                isRepeat: true
+            ) == nil,
+            "ignores repeated lock-toggle key-down events"
+        )
+    }
 
-        expect(gate.accept(.song(index: 0), at: 10), "accepts the first song shortcut")
-        expect(!gate.accept(.song(index: 0), at: 10.2), "suppresses a rapid repeat of the same song")
-        expect(gate.accept(.song(index: 1), at: 10.21), "accepts a different song immediately")
-        expect(!gate.accept(.song(index: 1), at: 10.3), "suppresses a repeat of the replacement song")
-        expect(gate.accept(.song(index: 1), at: 10.7), "accepts the same song after the debounce interval")
+    private static func acceptsOneShortcutSourcePerSessionState() {
+        expect(
+            HotKeySourcePolicy.accepts(source: .global, isLocked: false, isKeyboardLocked: false),
+            "accepts the global source while unlocked"
+        )
+        expect(
+            !HotKeySourcePolicy.accepts(source: .lockedEventTap, isLocked: false, isKeyboardLocked: false),
+            "rejects the inactive event-tap source while unlocked"
+        )
+        expect(
+            HotKeySourcePolicy.accepts(source: .lockedEventTap, isLocked: true, isKeyboardLocked: true),
+            "accepts the event tap during a real keyboard lock"
+        )
+        expect(
+            !HotKeySourcePolicy.accepts(source: .global, isLocked: true, isKeyboardLocked: true),
+            "rejects duplicate global delivery during a real keyboard lock"
+        )
+        expect(
+            HotKeySourcePolicy.accepts(source: .global, isLocked: true, isKeyboardLocked: false),
+            "keeps the global source as a fallback when the event tap failed"
+        )
     }
 }

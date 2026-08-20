@@ -4,7 +4,25 @@ import CoreGraphics
 enum GlobalHotKeyAction: Equatable {
     case toggleLock
     case twoMinutePlay
+    case playSong
     case song(index: Int)
+}
+
+enum HotKeySource: Equatable {
+    case global
+    case lockedEventTap
+}
+
+enum HotKeySourcePolicy {
+    static func accepts(source: HotKeySource, isLocked: Bool, isKeyboardLocked: Bool) -> Bool {
+        if !isLocked {
+            return source == .global
+        }
+        if isKeyboardLocked {
+            return source == .lockedEventTap
+        }
+        return source == .global
+    }
 }
 
 struct GlobalHotKeyDescriptor: Equatable {
@@ -34,6 +52,14 @@ enum GlobalHotKeys {
         action: .twoMinutePlay
     )
 
+    static let playSong = GlobalHotKeyDescriptor(
+        id: 3,
+        keyCode: UInt32(kVK_ANSI_P),
+        carbonModifiers: modifiers,
+        displayName: "⌥⌘P",
+        action: .playSong
+    )
+
     static let songs: [GlobalHotKeyDescriptor] = [
         song(id: 11, keyCode: UInt32(kVK_ANSI_1), number: 1),
         song(id: 12, keyCode: UInt32(kVK_ANSI_2), number: 2),
@@ -42,17 +68,26 @@ enum GlobalHotKeys {
         song(id: 15, keyCode: UInt32(kVK_ANSI_5), number: 5)
     ]
 
-    static let all = [toggleLock, twoMinutePlay] + songs
+    static let all = [toggleLock, twoMinutePlay, playSong] + songs
 
     static func descriptor(id: UInt32) -> GlobalHotKeyDescriptor? {
         all.first { $0.id == id }
     }
 
-    static func action(keyCode: Int64, flags: CGEventFlags) -> GlobalHotKeyAction? {
+    static func descriptor(keyCode: Int64, flags: CGEventFlags) -> GlobalHotKeyDescriptor? {
         let needed: CGEventFlags = [.maskAlternate, .maskCommand]
         let relevant = flags.intersection([.maskControl, .maskAlternate, .maskCommand, .maskShift])
         guard relevant == needed else { return nil }
-        return all.first { keyCode == Int64($0.keyCode) }?.action
+        return all.first { keyCode == Int64($0.keyCode) }
+    }
+
+    static func action(
+        keyCode: Int64,
+        flags: CGEventFlags,
+        isRepeat: Bool = false
+    ) -> GlobalHotKeyAction? {
+        guard !isRepeat else { return nil }
+        return descriptor(keyCode: keyCode, flags: flags)?.action
     }
 
     private static func song(id: UInt32, keyCode: UInt32, number: Int) -> GlobalHotKeyDescriptor {
@@ -73,28 +108,5 @@ enum ToggleHotKey {
 
     static func matches(keyCode: Int64, flags: CGEventFlags) -> Bool {
         GlobalHotKeys.action(keyCode: keyCode, flags: flags) == .toggleLock
-    }
-}
-
-struct GlobalHotKeyGate {
-    let minimumInterval: TimeInterval
-
-    private var lastAction: GlobalHotKeyAction?
-    private var lastAcceptedAt: TimeInterval?
-
-    init(minimumInterval: TimeInterval = 0.4) {
-        self.minimumInterval = minimumInterval
-    }
-
-    mutating func accept(_ action: GlobalHotKeyAction, at time: TimeInterval) -> Bool {
-        if action == lastAction,
-           let lastAcceptedAt,
-           time - lastAcceptedAt < minimumInterval {
-            return false
-        }
-
-        lastAction = action
-        lastAcceptedAt = time
-        return true
     }
 }

@@ -1,15 +1,40 @@
-# Mr.Blobsky Publishing Kit
+# Lapki Publishing Kit
 
 ## Submission status: blocked for the Mac App Store
 
 This repository now contains the metadata, privacy answers, review notes, icon, support page, release version, and verification checklist that can be prepared locally. **Do not upload the current product to the Mac App Store yet.**
 
-Apple requires App Sandbox for Mac App Store apps. Mr.Blobsky's defining behavior uses macOS Accessibility and a system-level event tap to contain keyboard and pointer input outside its own process. Apple lists accessibility APIs for assistive apps among technologies incompatible with App Sandbox. Turning the sandbox on would produce a build whose core keyboard-lock promise does not work; leaving it off fails Mac App Store validation.
+## Archive toolchain requirement
+
+App Store Connect rejects an archive made with an unsupported beta Xcode. Build
+the submission archive with the latest stable Xcode from the Mac App Store, or
+only with the exact Xcode seed Apple has announced as accepted in App Store
+Connect's **News and Updates**. Switching tools after an archive is created is
+not enough: rebuild, validate, and upload a new archive.
+
+Before archiving, select the supported full Xcode installation and confirm that
+the command-line build tools do not report a beta version:
+
+```sh
+sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+xcodebuild -version
+```
+
+If Xcode asks to install components, complete first-launch setup before making
+the archive:
+
+```sh
+sudo xcodebuild -runFirstLaunch
+```
+
+See Apple's [Xcode release notes](https://developer.apple.com/documentation/xcode-release-notes) and [App Store Connect release notes](https://developer.apple.com/help/app-store-connect/release-notes/) for the currently accepted toolchains.
+
+Apple requires App Sandbox for Mac App Store apps. Lapki's defining behavior uses macOS Accessibility and a system-level event tap to contain keyboard and pointer input outside its own process. Apple lists accessibility APIs for assistive apps among technologies incompatible with App Sandbox. Turning the sandbox on would produce a build whose core keyboard-lock promise does not work; leaving it off fails Mac App Store validation.
 
 The unchanged product can instead be distributed as a Developer ID-signed and notarized app outside the store. The two honest paths are:
 
 1. **Recommended for the current product:** ship a Developer ID-notarized download.
-2. **Mac App Store redesign:** remove the system-wide keyboard/pointer lock and reposition Mr.Blobsky as an in-app-only toy, then enable App Sandbox and test every interaction again.
+2. **Mac App Store redesign:** remove the system-wide keyboard/pointer lock and reposition Lapki as an in-app-only toy, then enable App Sandbox and test every interaction again.
 
 The locally verified Release build is signed with the installed Apple Development certificate. It is a test artifact, not a distributable release; it must be rebuilt with the distribution identity for the chosen path.
 
@@ -19,8 +44,8 @@ Official references: [App Sandbox](https://developer.apple.com/documentation/sec
 
 | Field | Value |
 | --- | --- |
-| App name | `Mr.Blobsky` |
-| Bundle ID | `com.yaosamo.mrblobsky` |
+| App name | `Lapki` |
+| Bundle ID | `com.yaosamo.lapki` |
 | Version | `1.0.0` |
 | Build | `3` |
 | Primary category | Entertainment |
@@ -29,7 +54,7 @@ Official references: [App Sandbox](https://developer.apple.com/documentation/sec
 | Privacy policy URL | `https://github.com/yaosamo/toddlerkeys/blob/main/PRIVACY.md` |
 | Support URL | `https://github.com/yaosamo/toddlerkeys/blob/main/SUPPORT.md` |
 | Marketing URL | `https://github.com/yaosamo/toddlerkeys` |
-| SKU | **Owner must choose a permanent private value**, for example `MRBLOBSKY-MAC-001` |
+| SKU | **Owner must choose a permanent private value**, for example `LAPKI-MAC-001` |
 
 Before entering these URLs in App Store Connect, merge and publish `PRIVACY.md` and `SUPPORT.md` on the public default branch, then open each URL in a signed-out browser.
 
@@ -38,7 +63,7 @@ Before entering these URLs in App Store Connect, merge and publish `PRIVACY.md` 
 ### Name
 
 ```text
-Mr.Blobsky
+Lapki
 ```
 
 ### Subtitle
@@ -56,13 +81,13 @@ Turn curious key presses into friendly music, silly sounds, colorful trails, and
 ### Description
 
 ```text
-Mr.Blobsky turns a Mac keyboard and trackpad into a cheerful musical playground.
+Lapki turns a Mac keyboard and trackpad into a cheerful musical playground.
 
 Press almost any key to hear a friendly note or silly sound while animated blob-cat stickers bounce across the screen. Move the trackpad to paint a colorful trail, or click for a surprise.
 
-Choose from five familiar follow-along melodies, then play the selected song whenever you like. You can also record one short sound and let Mr.Blobsky transform it across the keyboard. Recording again simply replaces the old clip.
+Choose from five familiar follow-along melodies, then play the selected song whenever you like. You can also record one short sound and let Lapki transform it across the keyboard. Recording again simply replaces the old clip.
 
-For focused parent time, start an optional two-minute play session. When time is up, the music stops and Mr.Blobsky says “NOPE!” until a parent uses the unlock shortcut.
+For focused parent time, start an optional two-minute play session. When time is up, the music stops and Lapki says “NOPE!” until a parent uses the unlock shortcut.
 
 Highlights:
 • Friendly pentatonic notes and playful sound effects
@@ -73,7 +98,7 @@ Highlights:
 • Parent lock/unlock shortcut
 • No accounts, ads, analytics, tracking, or network features
 
-Mr.Blobsky lives in the menu bar and needs macOS Accessibility permission for its keyboard containment feature. Some macOS versions may also request Input Monitoring. A microphone permission is requested only if you choose to record a sound.
+Lapki lives in the menu bar and needs macOS Accessibility permission for its keyboard containment feature. Some macOS versions may also request Input Monitoring. A microphone permission is requested only if you choose to record a sound.
 ```
 
 ### Keywords
@@ -87,7 +112,7 @@ The keywords are comma-separated and under App Store Connect's 100-byte limit. P
 ### What's New for 1.0.0
 
 ```text
-Meet Mr.Blobsky: playful keyboard sounds, colorful trackpad magic, five follow-along songs, your own recorded sound, and an optional two-minute parent timer.
+Meet Lapki: playful keyboard sounds, colorful trackpad magic, five follow-along songs, your own recorded sound, and an optional two-minute parent timer.
 ```
 
 ## App privacy answers
@@ -102,7 +127,7 @@ Use these answers in App Store Connect:
 | Is audio transmitted off the device? | No |
 | Is keyboard input stored or transmitted? | No |
 
-Apple defines collection around transmitting data off-device for access beyond the immediate request. Mr.Blobsky processes key events in memory and stores an optional recording only on the user's Mac, so that local activity is not declared as collected. The repository's `PrivacyInfo.xcprivacy` declares no tracking, collected-data types, tracking domains, or accessed API types. Recheck these answers if networking, telemetry, crash reporting, cloud sync, or another SDK is added. See [App privacy details](https://developer.apple.com/app-store/app-privacy-details/) and [privacy manifest files](https://developer.apple.com/documentation/bundleresources/privacy-manifest-files).
+Apple defines collection around transmitting data off-device for access beyond the immediate request. Lapki processes key events in memory and stores an optional recording only on the user's Mac, so that local activity is not declared as collected. The repository's `PrivacyInfo.xcprivacy` declares no tracking, collected-data types, tracking domains, or accessed API types. Recheck these answers if networking, telemetry, crash reporting, cloud sync, or another SDK is added. See [App privacy details](https://developer.apple.com/app-store/app-privacy-details/) and [privacy manifest files](https://developer.apple.com/documentation/bundleresources/privacy-manifest-files).
 
 ## Age rating and audience
 
@@ -114,7 +139,7 @@ Suggested age-rating questionnaire answers for the current content:
 
 The resulting rating is expected to be the lowest general rating, but App Store Connect calculates the final rating. Verify the questionnaire rather than copying an assumed badge. See [Set an app age rating](https://developer.apple.com/help/app-store-connect/manage-app-information/set-an-app-age-rating).
 
-Do **not** select **Made for Kids** casually. Apple treats that choice as a lasting product decision with additional category, link, analytics, and advertising rules. Mr.Blobsky can use the Entertainment category and family-friendly copy without making that irreversible selection. If you intentionally choose the Kids category, review [Apple's kids app requirements](https://developer.apple.com/kids/) first and revise the metadata and every external link accordingly.
+Do **not** select **Made for Kids** casually. Apple treats that choice as a lasting product decision with additional category, link, analytics, and advertising rules. Lapki can use the Entertainment category and family-friendly copy without making that irreversible selection. If you intentionally choose the Kids category, review [Apple's kids app requirements](https://developer.apple.com/kids/) first and revise the metadata and every external link accordingly.
 
 ## Export compliance
 
@@ -129,7 +154,7 @@ Blob-cat artwork is attributed in `THIRD_PARTY_BLOBCATS_LICENSE` and documented 
 ## App Review notes — copy and paste
 
 ```text
-Mr.Blobsky is a menu-bar app with no Dock icon and no account or network service.
+Lapki is a menu-bar app with no Dock icon and no account or network service.
 
 To begin, click the cat icon in the menu bar and choose Lock Keyboard, or press Option-Command-K. Press the same Option-Command-K shortcut again to unlock. Option-Command-T starts the optional two-minute session. Option-Command-1 through Option-Command-5 select a follow-along song, and Option-Command-P plays the selected melody.
 
@@ -169,6 +194,7 @@ Only use this checklist after resolving the sandbox incompatibility:
 - [ ] Merge and publish the privacy and support pages; verify their URLs while signed out.
 - [ ] Capture and upload at least one screenshot at an accepted size.
 - [ ] Enter metadata, category, age-rating, privacy, export-compliance, and content-rights answers.
+- [ ] Select the latest stable Xcode (or an Apple-announced accepted seed), verify `xcodebuild -version` is eligible, and complete first-launch setup.
 - [ ] Archive the Release build in Xcode, validate it, and upload it to App Store Connect.
 - [ ] Test the uploaded build through TestFlight for Mac.
 - [ ] Select the build, complete App Review contact information, answer every compliance prompt, and submit.

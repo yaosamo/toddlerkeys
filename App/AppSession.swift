@@ -52,8 +52,8 @@ final class AppSession: ObservableObject {
         locker.onTrackpadPress = { [weak self] in
             self?.handleTrackpadPress()
         }
-        hotKey.onPressed = { [weak self] in
-            self?.handleHotKey()
+        hotKey.onPressed = { [weak self] action in
+            self?.handleHotKey(action)
         }
         hotKey.register()
         playground.applyVoicePreference()
@@ -61,12 +61,12 @@ final class AppSession: ObservableObject {
         log.info("Session started. AX=\(self.accessibilityTrusted, privacy: .public) listen=\(AccessibilityAuth.canListenToKeys, privacy: .public)")
     }
 
-    func handleHotKey() {
+    private func handleHotKey(_ action: GlobalHotKeyAction) {
         let now = Date()
         guard now.timeIntervalSince(lastHotKeyAt) > 0.4 else { return }
         lastHotKeyAt = now
 
-        if isLocked {
+        if action == .toggleLock, isLocked {
             // If the tap is running it already handles unlock. This path is
             // for when the tap never started.
             if !isKeyboardLocked {
@@ -74,7 +74,17 @@ final class AppSession: ObservableObject {
             }
             return
         }
-        lockAndShow()
+
+        guard !isLocked else { return }
+        switch action {
+        case .toggleLock:
+            lockAndShow()
+        case .twoMinutePlay:
+            lockForTwoMinutes()
+        case .song(let index):
+            guard SongBook.all.indices.contains(index) else { return }
+            followSong(SongBook.all[index])
+        }
     }
 
     func lockAndShow() {

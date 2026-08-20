@@ -75,6 +75,7 @@ private struct MenuBarContent: View {
                 Button("Lock for 2-Minute Play") {
                     session.lockForTwoMinutes()
                 }
+                .keyboardShortcut("t", modifiers: [.option, .command])
             }
 
             Button("Record a Sound…") {
@@ -92,10 +93,14 @@ private struct MenuBarContent: View {
                     session.stopFollowingSong()
                 }
                 Divider()
-                ForEach(SongBook.all) { song in
+                ForEach(Array(SongBook.all.enumerated()), id: \.element.id) { index, song in
                     Button(song.title) {
                         session.followSong(song)
                     }
+                    .keyboardShortcut(
+                        KeyEquivalent(Character(String(index + 1))),
+                        modifiers: [.option, .command]
+                    )
                 }
             }
 

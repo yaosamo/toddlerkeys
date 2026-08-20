@@ -62,20 +62,17 @@ private struct MenuBarContent: View {
             }
 
             if session.isLocked {
-                Button("Unlock") {
+                Button("Unlock  \(GlobalHotKeys.toggleLock.displayName)") {
                     session.unlock()
                 }
-                .keyboardShortcut("k", modifiers: [.option, .command])
             } else {
-                Button("Lock Keyboard") {
+                Button("Lock Keyboard  \(GlobalHotKeys.toggleLock.displayName)") {
                     session.lockAndShow()
                 }
-                .keyboardShortcut("k", modifiers: [.option, .command])
 
-                Button("Lock for 2-Minute Play") {
+                Button("Lock for 2-Minute Play  \(GlobalHotKeys.twoMinutePlay.displayName)") {
                     session.lockForTwoMinutes()
                 }
-                .keyboardShortcut("t", modifiers: [.option, .command])
             }
 
             Button("Record a Sound…") {
@@ -94,19 +91,15 @@ private struct MenuBarContent: View {
                 }
                 Divider()
                 ForEach(Array(SongBook.all.enumerated()), id: \.element.id) { index, song in
-                    Button(song.title) {
+                    Button("\(song.title)  \(GlobalHotKeys.songs[index].displayName)") {
                         session.followSong(song)
                     }
-                    .keyboardShortcut(
-                        KeyEquivalent(Character(String(index + 1))),
-                        modifiers: [.option, .command]
-                    )
                 }
             }
 
             if playground.song != nil {
-                Button("Hear Song") {
-                    session.hearSong()
+                Button("Play Song  \(GlobalHotKeys.playSong.displayName)") {
+                    session.playSong()
                 }
             }
 

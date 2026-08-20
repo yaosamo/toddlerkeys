@@ -1,4 +1,4 @@
-# Mr.Blobsky
+# Lapki
 
 A tiny macOS menu-bar toy: mash the keyboard, get notes and silly sounds.
 
@@ -16,12 +16,29 @@ friendly. Pretty much every other key has its own synthesized effect.
 
 ## Run
 
-Open `MrBlobsky.xcodeproj` in Xcode, pick the **MrBlobsky** scheme, press Run.
+Open `Lapki.xcodeproj` in Xcode, pick the **Lapki** scheme, press Run.
+
+For an App Store Connect archive, use the latest **stable** Xcode from the Mac
+App Store. A beta archive is rejected unless Apple has explicitly listed that
+exact seed as accepted in App Store Connect's **News and Updates**. After
+installing the supported Xcode, select it and confirm the version before
+archiving:
+
+```sh
+sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+xcodebuild -version
+```
+
+The version output must not identify the archive toolchain as beta. Rebuild and
+upload a new archive after switching; an archive produced by a rejected beta
+cannot be made eligible afterward. See Apple's [Xcode release
+notes](https://developer.apple.com/documentation/xcode-release-notes) and [App
+Store Connect release notes](https://developer.apple.com/help/app-store-connect/release-notes/).
 
 Or from the repo root:
 
 ```sh
-xcodebuild -scheme MrBlobsky -destination 'platform=macOS' build
+xcodebuild -scheme Lapki -destination 'platform=macOS' build
 ```
 
 The built app lands under Xcode’s DerivedData. From Xcode, Run is the easy path.
@@ -51,11 +68,11 @@ Any leftover key still makes a sound from its key code, so a full-size keyboard 
 | Lock + two-minute play | `⌥⌘T`, or **Lock for 2-Minute Play** |
 | Unlock | `⌥⌘K` again, or **Unlock** |
 | Follow a song | `⌥⌘1` through `⌥⌘5`, or **Follow a Song** — five nursery songs on Z X C V B |
-| Hear the melody | **Hear Song** (only while a song is on) |
-| About | **About Mr.Blobsky** |
+| Play the selected melody | `⌥⌘P`, or **Play Song** (only while a song is on) |
+| About | **About Lapki** |
 | Record a sound | **Record a Sound…** — one short clip becomes every key |
 | Use that clip | **Use My Sound** / **Use Built-in Sounds** |
-| Quit | **Quit Mr.Blobsky** |
+| Quit | **Quit Lapki** |
 
 Keyboard lock needs **Accessibility** and sometimes **Input Monitoring**. macOS
 will prompt; you can also use **Allow Keyboard Access…**. Until those are on,

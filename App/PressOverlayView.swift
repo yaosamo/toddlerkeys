@@ -96,18 +96,16 @@ struct PressOverlayView: View {
                             .padding(.top, 10)
                     }
 
-                    Text(
-                        session.isPlaytimeOver
-                            ? "Mr.Blobsky says nope — parent time!"
-                            : "Move the trackpad to paint magic • press for a surprise"
-                    )
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.78))
-                        .padding(.top, 8)
+                    if session.isPlaytimeOver {
+                        Text("Mr.Blobsky says nope — parent time!")
+                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.78))
+                            .padding(.top, 8)
+                    }
                     Text("\(ToggleHotKey.displayName) to unlock")
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.65))
-                        .padding(.top, 6)
+                        .padding(.top, session.isPlaytimeOver ? 6 : 8)
                         .padding(.bottom, 28)
                 }
                 .allowsHitTesting(false)

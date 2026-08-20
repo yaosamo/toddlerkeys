@@ -11,7 +11,6 @@ struct LockedKeyStroke {
 }
 
 final class KeyboardLocker: @unchecked Sendable {
-    var onUnlock: (() -> Void)?
     var onHotKey: ((GlobalHotKeyAction) -> Void)?
     var onStroke: ((LockedKeyStroke) -> Void)?
     var onTrackpadPress: (() -> Void)?
@@ -120,15 +119,14 @@ final class KeyboardLocker: @unchecked Sendable {
         }
 
         if type == .keyDown,
-           let action = GlobalHotKeys.action(
+           let descriptor = GlobalHotKeys.descriptor(
             keyCode: event.getIntegerValueField(.keyboardEventKeycode),
             flags: event.flags
            ) {
-            DispatchQueue.main.async { [weak self] in
-                if action == .toggleLock {
-                    self?.onUnlock?()
-                } else {
-                    self?.onHotKey?(action)
+            let isRepeat = event.getIntegerValueField(.keyboardEventAutorepeat) != 0
+            if !isRepeat {
+                DispatchQueue.main.async { [weak self] in
+                    self?.onHotKey?(descriptor.action)
                 }
             }
             return nil

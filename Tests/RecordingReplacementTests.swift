@@ -46,9 +46,9 @@ private enum RecordingReplacementTests {
     @MainActor
     private static func verifiesRealSoundBankReplacement() {
         let root = FileManager.default.temporaryDirectory
-            .appendingPathComponent("mrblobsky-recording-test-\(UUID().uuidString)")
+            .appendingPathComponent("lapki-recording-test-\(UUID().uuidString)")
         let recordingURL = root.appendingPathComponent("voice.wav")
-        let suiteName = "MrBlobsky.RecordingReplacementTests.\(UUID().uuidString)"
+        let suiteName = "Lapki.RecordingReplacementTests.\(UUID().uuidString)"
         guard let defaults = UserDefaults(suiteName: suiteName) else {
             expect(false, "creates isolated recording preferences")
             return

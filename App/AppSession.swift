@@ -33,17 +33,24 @@ final class AppSession: ObservableObject {
     private let locker = KeyboardLocker()
     private let hotKey = HotKeyCenter()
     private let overlay = OverlayPanel()
-    private let log = Logger(subsystem: "com.yaosamo.mrblobsky", category: "session")
+    private let log = Logger(subsystem: "com.yaosamo.lapki", category: "session")
     private var retryTask: Task<Void, Never>?
     private var playTimerTask: Task<Void, Never>?
     private var playSessionClock = PlaySessionClock(limit: .unlimited, startedAt: 0)
     private var refusalGate = RefusalGate()
+    private var lockChordEchoGate = LockChordEchoGate()
 
     private init() {}
 
     func start() {
         locker.onHotKey = { [weak self] action in
             self?.handleHotKey(action, source: .lockedEventTap)
+        }
+        locker.onHotKeyKeyUp = { [weak self] keyCode in
+            self?.lockChordEchoGate.clearOnKeyUp(
+                keyCode,
+                at: ProcessInfo.processInfo.systemUptime
+            )
         }
         locker.onStroke = { [weak self] stroke in
             self?.playLocked(stroke)
@@ -67,6 +74,13 @@ final class AppSession: ObservableObject {
             isKeyboardLocked: isKeyboardLocked
         ) else { return }
 
+        let now = ProcessInfo.processInfo.systemUptime
+        // The chord that flips lock state is often delivered twice: Carbon and
+        // the event tap. Ignore the echo so lock→unlock or unlock→lock from
+        // one physical press cannot bounce straight back.
+        guard !lockChordEchoGate.shouldIgnore(action, at: now) else { return }
+
+        let wasLocked = isLocked
         switch action {
         case .toggleLock:
             if isLocked {
@@ -86,6 +100,14 @@ final class AppSession: ObservableObject {
         case .song(let index):
             guard SongBook.all.indices.contains(index) else { return }
             followSong(SongBook.all[index])
+        }
+
+        if wasLocked != isLocked,
+           let keyCode = GlobalHotKeys.descriptor(action: action)?.keyCode {
+            // Keep ignoring the other source's echo until this key is released
+            // (or the short safety timeout). That way lock→unlock can be a
+            // quick second press instead of waiting out a long debounce.
+            lockChordEchoGate.suppressEcho(of: action, keyCode: keyCode, at: now)
         }
     }
 
@@ -138,9 +160,18 @@ final class AppSession: ObservableObject {
     }
 
     func followSong(_ song: NurserySong) {
-        playground.startSong(song)
-        if !isLocked {
-            lockAndShow(limit: .unlimited)
+        switch SongHotKeyPolicy.effect(
+            isLocked: isLocked,
+            selectedSongID: playground.song?.id,
+            requestedSongID: song.id
+        ) {
+        case .unlock:
+            unlock()
+        case .follow:
+            playground.startSong(song)
+            if !isLocked {
+                lockAndShow(limit: .unlimited)
+            }
         }
     }
 

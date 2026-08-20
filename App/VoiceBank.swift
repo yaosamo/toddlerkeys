@@ -14,8 +14,11 @@ final class VoiceBank: ObservableObject {
 
     var shouldPlayVoice: Bool { usesVoice && hasSample }
 
-    private static let usesVoiceKey = "MrBlobsky.usesVoice"
-    private static let legacyUsesVoiceKey = "ToddlerKeys.usesVoice"
+    private static let usesVoiceKey = "Lapki.usesVoice"
+    private static let legacyUsesVoiceKeys = [
+        "MrBlobsky.usesVoice",
+        "ToddlerKeys.usesVoice"
+    ]
     private let recordingURL: URL
     private let userDefaults: UserDefaults
     private let migratesLegacyRecording: Bool
@@ -36,9 +39,9 @@ final class VoiceBank: ObservableObject {
         self.userDefaults = userDefaults
         self.migratesLegacyRecording = migratesLegacyRecording
         if userDefaults.object(forKey: Self.usesVoiceKey) == nil,
-           userDefaults.object(forKey: Self.legacyUsesVoiceKey) != nil
+           let legacyKey = Self.legacyUsesVoiceKeys.first(where: { userDefaults.object(forKey: $0) != nil })
         {
-            usesVoice = userDefaults.bool(forKey: Self.legacyUsesVoiceKey)
+            usesVoice = userDefaults.bool(forKey: legacyKey)
         } else {
             usesVoice = userDefaults.bool(forKey: Self.usesVoiceKey)
         }
@@ -348,20 +351,23 @@ final class VoiceBank: ObservableObject {
     static var fileURL: URL {
         let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSTemporaryDirectory())
-        return root.appendingPathComponent("MrBlobsky/voice.wav")
+        return root.appendingPathComponent("Lapki/voice.wav")
     }
 
-    private static var legacyFileURL: URL {
+    private static var legacyFileURLs: [URL] {
         let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSTemporaryDirectory())
-        return root.appendingPathComponent("ToddlerKeys/voice.wav")
+        return [
+            root.appendingPathComponent("MrBlobsky/voice.wav"),
+            root.appendingPathComponent("ToddlerKeys/voice.wav")
+        ]
     }
 
     private static func migrateLegacyRecordingIfNeeded() {
         let dest = fileURL
-        let legacy = legacyFileURL
         let files = FileManager.default
-        guard !files.fileExists(atPath: dest.path), files.fileExists(atPath: legacy.path) else { return }
+        guard !files.fileExists(atPath: dest.path) else { return }
+        guard let legacy = legacyFileURLs.first(where: { files.fileExists(atPath: $0.path) }) else { return }
         try? files.createDirectory(at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
         try? files.copyItem(at: legacy, to: dest)
     }

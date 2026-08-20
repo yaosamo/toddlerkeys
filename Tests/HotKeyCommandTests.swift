@@ -25,6 +25,9 @@ private enum HotKeyCommandTests {
         mapsLockedEventTapCommands()
         ignoresLockedHotKeyRepeats()
         acceptsOneShortcutSourcePerSessionState()
+        ignoresLockChordEcho()
+        sameSongUnlocksWhileLocked()
+        differentSongSwitchesWhileLocked()
 
         guard failures == 0 else { exit(1) }
         print("Global hotkey tests passed")
@@ -159,6 +162,98 @@ private enum HotKeyCommandTests {
         expect(
             HotKeySourcePolicy.accepts(source: .global, isLocked: true, isKeyboardLocked: false),
             "keeps the global source as a fallback when the event tap failed"
+        )
+    }
+
+    private static func ignoresLockChordEcho() {
+        var gate = LockChordEchoGate()
+        let songKey = GlobalHotKeys.songs[0].keyCode
+        let lockKey = GlobalHotKeys.toggleLock.keyCode
+
+        gate.suppressEcho(of: .song(index: 0), keyCode: songKey, at: 10)
+        expect(
+            gate.shouldIgnore(.song(index: 0), at: 10.05),
+            "suppresses the event-tap echo that would unlock the song just used to lock"
+        )
+        expect(
+            !gate.shouldIgnore(.song(index: 1), at: 10.05),
+            "still allows a different song while the echo window is open"
+        )
+
+        gate.clearOnKeyUp(songKey, at: 10.08)
+        expect(
+            gate.shouldIgnore(.song(index: 0), at: 10.10),
+            "keeps a short tail after key-up for deferred echoes"
+        )
+        expect(
+            !gate.shouldIgnore(.song(index: 0), at: 10.14),
+            "allows the next press to unlock right after key-up"
+        )
+
+        // Same-song unlock tears down the tap; Carbon can then see the chord
+        // and would re-lock unless that echo is suppressed too.
+        gate.suppressEcho(of: .song(index: 0), keyCode: songKey, at: 20)
+        expect(
+            gate.shouldIgnore(.song(index: 0), at: 20.05),
+            "suppresses the Carbon echo that would re-lock after same-song unlock"
+        )
+        expect(
+            !gate.shouldIgnore(.song(index: 0), at: 20.2),
+            "allows locking with the same song again after the short unlock echo window"
+        )
+
+        gate.suppressEcho(of: .toggleLock, keyCode: lockKey, at: 30)
+        expect(
+            gate.shouldIgnore(.toggleLock, at: 30.05),
+            "suppresses the event-tap echo of the lock toggle"
+        )
+        gate.clearOnKeyUp(UInt32(kVK_ANSI_A), at: 30.06)
+        expect(
+            gate.shouldIgnore(.toggleLock, at: 30.06),
+            "ignores key-up for unrelated keys"
+        )
+        gate.clear()
+        expect(
+            !gate.shouldIgnore(.toggleLock, at: 30.06),
+            "clears echo suppression when reset"
+        )
+    }
+
+    private static func sameSongUnlocksWhileLocked() {
+        expect(
+            SongHotKeyPolicy.effect(
+                isLocked: true,
+                selectedSongID: "mary",
+                requestedSongID: "mary"
+            ) == .unlock,
+            "pressing the current song shortcut unlocks"
+        )
+        expect(
+            SongHotKeyPolicy.effect(
+                isLocked: false,
+                selectedSongID: "mary",
+                requestedSongID: "mary"
+            ) == .follow,
+            "pressing a song shortcut while unlocked still follows and locks"
+        )
+    }
+
+    private static func differentSongSwitchesWhileLocked() {
+        expect(
+            SongHotKeyPolicy.effect(
+                isLocked: true,
+                selectedSongID: "mary",
+                requestedSongID: "jingle-bells"
+            ) == .follow,
+            "pressing a different song shortcut switches songs while staying locked"
+        )
+        expect(
+            SongHotKeyPolicy.effect(
+                isLocked: true,
+                selectedSongID: nil,
+                requestedSongID: "mary"
+            ) == .follow,
+            "selecting a song while locked with no song follows that song"
         )
     }
 }

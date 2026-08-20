@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 @main
-struct MrBlobskyApp: App {
+struct LapkiApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var session = AppSession.shared
 
@@ -18,7 +18,7 @@ struct MrBlobskyApp: App {
                         .renderingMode(.template)
                 }
             }
-            .accessibilityLabel(session.isLocked ? "Mr.Blobsky Locked" : "Mr.Blobsky")
+            .accessibilityLabel(session.isLocked ? "Lapki Locked" : "Lapki")
         }
         .menuBarExtraStyle(.menu)
     }
@@ -49,7 +49,7 @@ private struct MenuBarContent: View {
 
     var body: some View {
         VStack {
-            Button("About Mr.Blobsky") {
+            Button("About Lapki") {
                 AboutPanel.shared.show()
             }
 
@@ -111,7 +111,7 @@ private struct MenuBarContent: View {
 
             Divider()
 
-            Button("Quit Mr.Blobsky") {
+            Button("Quit Lapki") {
                 session.quit()
             }
         }

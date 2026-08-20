@@ -71,7 +71,7 @@ final class OverlayPanel {
         window.initialFirstResponder = root
         window.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.assistiveTechHighWindow)))
         window.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
-        window.title = "Mr.Blobsky Overlay"
+        window.title = "Lapki Overlay"
         self.rootView = root
         self.host = host
         self.window = window

@@ -5,7 +5,7 @@ enum AppInfo {
     static var name: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
             ?? Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String
-            ?? "Mr.Blobsky"
+            ?? "Lapki"
     }
 
     static var version: String {

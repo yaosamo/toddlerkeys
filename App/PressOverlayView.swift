@@ -97,7 +97,7 @@ struct PressOverlayView: View {
                     }
 
                     if session.isPlaytimeOver {
-                        Text("Mr.Blobsky says nope — parent time!")
+                        Text("Lapki says nope — parent time!")
                             .font(.system(size: 14, weight: .semibold, design: .rounded))
                             .foregroundStyle(.white.opacity(0.78))
                             .padding(.top, 8)
